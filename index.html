@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="sr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MindCraft – Vizuelni Organizator Koncepta i Ideja</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      crossorigin="anonymous"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/2.10.1/dom-to-image-more.min.js"></script>
+  </head>
+  <body data-theme="light">
+    <nav class="navbar">
+      <div class="logo">MindCraft</div>
+      <div class="tools">
+        <button id="add-node-btn" title="Dodaj novu ideju">
+          <i class="fas fa-plus"></i> Dodaj
+        </button>
+        <button id="connect-nodes-btn" title="Poveži dve ideje">
+          <i class="fas fa-link"></i> Poveži
+        </button>
+        <button id="export-json-btn" title="Eksportuj mapu u JSON">
+          <i class="fas fa-file-export"></i> Eksportuj JSON
+        </button>
+        <label
+          for="import-json-input"
+          class="tool-button"
+          title="Uvezi mapu iz JSON fajla"
+        >
+          <i class="fas fa-file-import"></i> Uvezi JSON
+          <input
+            type="file"
+            id="import-json-input"
+            accept=".json"
+            style="display: none"
+          />
+        </label>
+        <button id="export-png-btn" title="Eksportuj mapu kao PNG">
+          <i class="fas fa-image"></i> Eksportuj PNG
+        </button>
+        <button id="theme-toggle-btn" title="Promeni temu">
+          <i class="fas fa-adjust"></i> Tema
+        </button>
+      </div>
+    </nav>
+
+    <main id="workspace">
+      <svg id="connector-layer"></svg>
+      <div id="node-layer"></div>
+    </main>
+
+    <div id="context-menu" class="context-menu">
+      <ul>
+        <li data-action="edit"><i class="fas fa-edit"></i> Izmeni</li>
+        <li data-action="connect"><i class="fas fa-link"></i> Poveži odavde</li>
+        <li data-action="color">
+          <i class="fas fa-palette"></i> Promeni boju
+          <input
+            type="color"
+            id="context-color-picker"
+            style="opacity: 0; width: 0; height: 0; position: absolute"
+          />
+        </li>
+        <li data-action="delete"><i class="fas fa-trash"></i> Obriši</li>
+        <li data-action="history"><i class="fas fa-history"></i> Istorija</li>
+      </ul>
+    </div>
+
+    <div id="notification-area"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/node.js"></script>
+    <script src="js/connector.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
