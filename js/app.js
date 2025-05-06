@@ -41,9 +41,7 @@ const app = (function () {
     exportPngButton.addEventListener("click", exportMapPng);
 
     workspace.addEventListener("mousedown", startPan);
-    workspace.addEventListener("mousemove", pan);
     workspace.addEventListener("mouseup", endPan);
-    workspace.addEventListener("mouseleave", endPan);
     workspace.addEventListener("wheel", zoom);
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -409,25 +407,39 @@ const app = (function () {
   }
 
   function zoom(event) {
+    if (isPanning || (event.buttons & 4) === 4) {
+      return;
+    }
     event.preventDefault();
 
-    const scaleAmount = 0.1;
-    const mouseX = event.clientX - workspace.getBoundingClientRect().left;
-    const mouseY = event.clientY - workspace.getBoundingClientRect().top;
+    const scaleAmount = 0.05;
+    const workspaceRect = workspace.getBoundingClientRect();
 
-    const worldX = (mouseX - viewTransform.x) / viewTransform.scale;
-    const worldY = (mouseY - viewTransform.y) / viewTransform.scale;
+    const centerX = workspaceRect.width / 2;
+    const centerY = workspaceRect.height / 2;
 
+    const worldCenterX_before =
+      (centerX - viewTransform.x) / viewTransform.scale;
+    const worldCenterY_before =
+      (centerY - viewTransform.y) / viewTransform.scale;
+
+    let oldScale = viewTransform.scale;
     let newScale = viewTransform.scale;
+
     if (event.deltaY < 0) {
-      newScale = Math.min(viewTransform.scale * (1 + scaleAmount), 3);
+      newScale = Math.min(oldScale * (1 + scaleAmount), 3);
     } else {
-      newScale = Math.max(viewTransform.scale * (1 - scaleAmount), 0.2);
+      newScale = Math.max(oldScale * (1 - scaleAmount), 0.2);
     }
 
-    viewTransform.x = mouseX - worldX * newScale;
-    viewTransform.y = mouseY - worldX * newScale;
+    if (newScale === oldScale) {
+      return;
+    }
+
     viewTransform.scale = newScale;
+
+    viewTransform.x = centerX - worldCenterX_before * newScale;
+    viewTransform.y = centerY - worldCenterY_before * newScale;
 
     applyViewTransform();
   }
