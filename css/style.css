@@ -1,25 +1,43 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap");
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
-  --background-light: #f0f2f5;
+  --background-light: #e0e5ec; /* Neumorphism light bg */
   --surface-light: #ffffff;
   --text-light: #333;
   --primary-light: #007bff;
   --primary-hover-light: #0056b3;
-  --shadow-light: rgba(0, 0, 0, 0.1);
-  --connector-light: #6c757d;
+  --shadow-light-outer: rgba(0, 0, 0, 0.1);
+  --shadow-light-inner-top: rgba(255, 255, 255, 0.7);
+  --shadow-light-inner-bottom: rgba(0, 0, 0, 0.05);
+  --connector-light: #495057; /* Malo tamniji konektor za svetlu temu */
+  --glass-light-bg: rgba(255, 255, 255, 0.5);
+  --glass-light-blur: 10px;
+  --glass-light-border: rgba(255, 255, 255, 0.3);
 
-  --background-dark: #1a1a2e;
-  --surface-dark: #162447;
-  --text-dark: #e0e0e0;
-  --primary-dark: #1f4287;
-  --primary-hover-dark: #27496d;
-  --shadow-dark: rgba(0, 0, 0, 0.4);
-  --connector-dark: #a0a0d0;
+  --background-dark: #2c3e50; /* Neumorphism dark bg */
+  --surface-dark: #34495e;
+  --text-dark: #ecf0f1;
+  --primary-dark: #3498db;
+  --primary-hover-dark: #2980b9;
+  --shadow-dark-outer: rgba(0, 0, 0, 0.3);
+  --shadow-dark-inner-top: rgba(255, 255, 255, 0.05);
+  --shadow-dark-inner-bottom: rgba(0, 0, 0, 0.2);
+  --connector-dark: #dee2e6; /* Svetliji konektor za tamnu temu */
+  --glass-dark-bg: rgba(44, 62, 80, 0.6);
+  --glass-dark-blur: 10px;
+  --glass-dark-border: rgba(255, 255, 255, 0.1);
 
   --font-family: "Poppins", sans-serif;
-  --border-radius: 8px;
+  --border-radius: 12px; /* Increased border radius */
   --transition-speed: 0.3s;
+  --animation-speed-fast: 0.2s;
+  --animation-speed-medium: 0.4s;
 }
 
 body {
@@ -40,8 +58,13 @@ body[data-theme="dark"] {
   --text-main: var(--text-dark);
   --primary-main: var(--primary-dark);
   --primary-hover-main: var(--primary-hover-dark);
-  --shadow-main: var(--shadow-dark);
+  --shadow-main-outer: var(--shadow-dark-outer);
+  --shadow-main-inner-top: var(--shadow-dark-inner-top);
+  --shadow-main-inner-bottom: var(--shadow-dark-inner-bottom);
   --connector-main: var(--connector-dark);
+  --glass-bg: var(--glass-dark-bg);
+  --glass-blur: var(--glass-dark-blur);
+  --glass-border: var(--glass-dark-border);
   background-color: var(--background-dark);
   color: var(--text-dark);
 }
@@ -52,8 +75,13 @@ body[data-theme="light"] {
   --text-main: var(--text-light);
   --primary-main: var(--primary-light);
   --primary-hover-main: var(--primary-hover-light);
-  --shadow-main: var(--shadow-light);
+  --shadow-main-outer: var(--shadow-light-outer);
+  --shadow-main-inner-top: var(--shadow-light-inner-top);
+  --shadow-main-inner-bottom: var(--shadow-light-inner-bottom);
   --connector-main: var(--connector-light);
+  --glass-bg: var(--glass-light-bg);
+  --glass-blur: var(--glass-light-blur);
+  --glass-border: var(--glass-light-border);
   background-color: var(--background-light);
   color: var(--text-light);
 }
@@ -62,9 +90,12 @@ body[data-theme="light"] {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
-  background-color: var(--surface-main);
-  box-shadow: 0 2px 5px var(--shadow-main);
+  padding: 12px 25px; /* Slightly increased padding */
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 2px 10px var(--shadow-main-outer); /* Softer shadow */
   color: var(--text-main);
   position: fixed;
   top: 0;
@@ -72,11 +103,12 @@ body[data-theme="light"] {
   width: 100%;
   z-index: 1000;
   transition: background-color var(--transition-speed) ease,
-    box-shadow var(--transition-speed) ease, color var(--transition-speed) ease;
+    box-shadow var(--transition-speed) ease, color var(--transition-speed) ease,
+    border-color var(--transition-speed) ease;
 }
 
 .navbar .logo {
-  font-size: 1.5em;
+  font-size: 1.6em; /* Slightly larger logo */
   font-weight: 600;
 }
 
@@ -85,33 +117,42 @@ body[data-theme="light"] {
   background-color: var(--primary-main);
   color: white;
   border: none;
-  padding: 8px 15px;
-  margin-left: 10px;
+  padding: 10px 18px; /* Increased padding */
+  margin-left: 12px; /* Increased margin */
   border-radius: var(--border-radius);
   cursor: pointer;
-  font-size: 0.9em;
-  transition: background-color var(--transition-speed) ease;
+  font-size: 0.95em; /* Slightly larger font */
+  transition: background-color var(--transition-speed) ease,
+    transform var(--animation-speed-fast) ease;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px; /* Increased gap */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for buttons */
 }
 
 .navbar .tools button:hover,
 .navbar .tools .tool-button:hover {
   background-color: var(--primary-hover-main);
+  transform: translateY(-2px); /* Hover effect */
 }
 
-.navbar .tools button i,
-.navbar .tools .tool-button i {
-  margin-right: 5px;
+.navbar .tools button:active,
+.navbar .tools .tool-button:active {
+  transform: translateY(0px); /* Click effect */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.navbar .tools button.active {
+  background-color: var(--primary-hover-main);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 #workspace {
   position: absolute;
-  top: 60px;
+  top: 70px; /* Adjusted for new navbar height */
   left: 0;
   width: 100%;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 70px); /* Adjusted for new navbar height */
   background-color: var(--background-main);
   overflow: hidden;
   cursor: grab;
@@ -146,51 +187,125 @@ body[data-theme="light"] {
 
 .connector-line {
   stroke: var(--connector-main);
-  stroke-width: 2;
+  stroke-width: 2.5; /* Slightly thicker */
   fill: none;
   transition: stroke var(--transition-speed) ease;
 }
 
 .node {
   position: absolute;
-  background-color: var(--surface-main);
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   color: var(--text-main);
-  border: 1px solid transparent;
+  border: 1px solid var(--glass-border);
   border-radius: var(--border-radius);
-  padding: 15px;
-  min-width: 150px;
-  min-height: 50px;
-  box-shadow: 0 4px 8px var(--shadow-main);
-  cursor: move;
+  padding: 18px;
+  min-width: 160px;
+  min-height: 60px;
+  box-shadow: 0 5px 15px var(--shadow-main-outer),
+    /* Outer shadow */ inset 1px 1px 2px var(--shadow-main-inner-top),
+    /* Inner highlight */ inset -1px -1px 2px var(--shadow-main-inner-bottom); /* Inner shadow */
+  cursor: grab; /* Changed from move for consistency */
   z-index: 10;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s ease, box-shadow var(--transition-speed) ease,
+  transition: transform var(--animation-speed-medium) ease,
+    box-shadow var(--transition-speed) ease,
     background-color var(--transition-speed) ease,
-    color var(--transition-speed) ease, border-color 0.2s ease;
-  opacity: 0;
-  animation: fadeIn 0.5s forwards;
+    border-color var(--transition-speed) ease,
+    color var(--transition-speed) ease,
+    opacity var(--animation-speed-medium) ease;
+  animation: fadeInNode 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-@keyframes fadeIn {
+@keyframes fadeInNode {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
   to {
     opacity: 1;
+    transform: scale(1);
   }
+}
+
+@keyframes dragBounceDrop {
+  0% {
+    transform: scale(1.05);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.node.dropped {
+  animation-name: fadeInNode, dragBounceDrop;
+  animation-duration: 0.5s, 0.5s;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94), ease-out;
+  animation-fill-mode: forwards, normal;
+}
+
+.node:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 20px var(--shadow-main-outer),
+    inset 1px 1px 3px var(--shadow-main-inner-top),
+    inset -1px -1px 3px var(--shadow-main-inner-bottom);
 }
 
 .node.dragging {
   z-index: 100;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25),
+    inset 1px 1px 2px var(--shadow-main-inner-top),
+    inset -1px -1px 2px var(--shadow-main-inner-bottom);
   transform: scale(1.05);
+  cursor: grabbing;
 }
 
 .node.selected {
   border-color: var(--primary-main);
-  box-shadow: 0 0 10px var(--primary-main);
+  box-shadow: 0 0 12px var(--primary-main),
+    inset 1px 1px 2px var(--shadow-main-inner-top),
+    inset -1px -1px 2px var(--shadow-main-inner-bottom);
+  animation: pulseSelection 1.5s infinite ease-in-out;
+}
+
+@keyframes pulseSelection {
+  0% {
+    box-shadow: 0 0 12px var(--primary-main),
+      inset 1px 1px 2px var(--shadow-main-inner-top),
+      inset -1px -1px 2px var(--shadow-main-inner-bottom);
+  }
+  50% {
+    box-shadow: 0 0 18px var(--primary-main),
+      inset 1px 1px 2px var(--shadow-main-inner-top),
+      inset -1px -1px 2px var(--shadow-main-inner-bottom);
+  }
+  100% {
+    box-shadow: 0 0 12px var(--primary-main),
+      inset 1px 1px 2px var(--shadow-main-inner-top),
+      inset -1px -1px 2px var(--shadow-main-inner-bottom);
+  }
 }
 
 .node.connecting-start {
   border: 2px dashed var(--primary-main);
+  animation: pulseBorder 1.2s infinite; /* Pulse border for connecting node */
+}
+
+@keyframes pulseBorder {
+  0% {
+    border-color: var(--primary-main);
+  }
+  50% {
+    border-color: var(--primary-hover-main);
+  }
+  100% {
+    border-color: var(--primary-main);
+  }
 }
 
 .node-header {
@@ -202,15 +317,19 @@ body[data-theme="light"] {
 
 .node-title {
   font-weight: 600;
-  font-size: 1.1em;
+  font-size: 1.15em; /* Slightly larger */
   outline: none;
   flex-grow: 1;
-  padding: 5px;
-  border-radius: 4px;
+  padding: 6px; /* Increased padding */
+  border-radius: 6px; /* Softer radius */
+  background-color: transparent; /* Ensure it's transparent for glass effect */
+  color: inherit; /* Inherit color from node */
+  caret-color: var(--text-main); /* Dodata boja kursora */
 }
 
 .node-title:focus {
-  background-color: rgba(0, 123, 255, 0.1);
+  background-color: rgba(0, 123, 255, 0.15); /* Slightly more visible focus */
+  box-shadow: 0 0 0 2px var(--primary-main); /* Focus ring */
 }
 
 .node-icon {
@@ -220,30 +339,63 @@ body[data-theme="light"] {
 }
 
 .node-description {
-  font-size: 0.9em;
-  margin-top: 5px;
+  font-size: 0.95em; /* Slightly larger */
+  margin-top: 8px; /* Increased margin */
   outline: none;
-  padding: 5px;
-  border-radius: 4px;
-  min-height: 20px;
+  padding: 6px; /* Increased padding */
+  border-radius: 6px; /* Softer radius */
+  min-height: 22px; /* Slightly taller */
+  background-color: transparent; /* Ensure it's transparent for glass effect */
+  color: inherit; /* Inherit color from node */
+  caret-color: var(--text-main); /* Dodata boja kursora */
+}
+
+.node-description.empty::before {
+  content: attr(placeholder);
+  /* Za svetlu temu, koristićemo tamniju sivu boju */
+  color: #6c757d; /* Tamnija siva */
+  opacity: 0.75;
+  font-style: italic;
+  transition: opacity var(--transition-speed) ease,
+    color var(--transition-speed) ease;
+}
+
+body[data-theme="dark"] .node-description.empty::before {
+  /* Za tamnu temu, koristićemo svetliju sivu boju */
+  color: #adb5bd; /* Svetlija siva */
+  opacity: 0.85;
 }
 
 .node-description:focus {
-  background-color: rgba(0, 123, 255, 0.1);
+  background-color: rgba(0, 123, 255, 0.15); /* Slightly more visible focus */
+  box-shadow: 0 0 0 2px var(--primary-main); /* Focus ring */
 }
 
 .context-menu {
   position: absolute;
-  background-color: var(--surface-main);
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
   border-radius: var(--border-radius);
-  box-shadow: 0 2px 10px var(--shadow-main);
-  padding: 10px 0;
+  box-shadow: 0 4px 15px var(--shadow-main-outer); /* Enhanced shadow */
+  padding: 8px 0; /* Adjusted padding */
   z-index: 1001;
   display: none;
-  min-width: 150px;
+  min-width: 180px; /* Wider context menu */
   color: var(--text-main);
   transition: background-color var(--transition-speed) ease,
-    box-shadow var(--transition-speed) ease, color var(--transition-speed) ease;
+    box-shadow var(--transition-speed) ease, color var(--transition-speed) ease,
+    border-color var(--transition-speed) ease, opacity 0.2s ease,
+    transform 0.2s ease; /* Added transition for show/hide */
+  opacity: 0; /* Start hidden for animation */
+  transform: scale(0.95) translateY(-5px); /* Start slightly smaller and offset */
+}
+
+.context-menu.visible {
+  /* Class to be added by JS to show */
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }
 
 .context-menu ul {
@@ -253,12 +405,14 @@ body[data-theme="light"] {
 }
 
 .context-menu li {
-  padding: 8px 15px;
+  padding: 10px 18px; /* Increased padding */
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 0.9em;
+  gap: 12px; /* Increased gap */
+  font-size: 0.95em; /* Slightly larger font */
+  transition: background-color var(--animation-speed-fast) ease,
+    color var(--animation-speed-fast) ease;
 }
 
 .context-menu li:hover {
@@ -267,14 +421,14 @@ body[data-theme="light"] {
 }
 
 .context-menu li i {
-  width: 15px;
+  width: 18px; /* Increased icon width */
   text-align: center;
 }
 
 #notification-area {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 25px; /* Increased offset */
+  right: 25px; /* Increased offset */
   z-index: 2000;
   display: flex;
   flex-direction: column;
@@ -282,15 +436,29 @@ body[data-theme="light"] {
 }
 
 .notification {
-  background-color: var(--primary-main);
-  color: white;
-  padding: 10px 20px;
+  background-color: var(
+    --surface-main
+  ); /* Use surface for better contrast with text */
+  color: var(--text-main);
+  padding: 12px 22px; /* Increased padding */
   border-radius: var(--border-radius);
-  box-shadow: 0 2px 5px var(--shadow-main);
+  box-shadow: 0 3px 8px var(--shadow-main-outer); /* Enhanced shadow */
   opacity: 0;
   transform: translateY(20px);
-  animation: slideInFadeOut 4s forwards;
-  font-size: 0.9em;
+  animation: slideInFadeOut 4.5s forwards; /* Slightly longer duration */
+  font-size: 0.95em; /* Slightly larger font */
+  border-left: 4px solid var(--primary-main); /* Accent border */
+}
+
+.notification.error {
+  border-left-color: #e74c3c; /* Red for error */
+  background-color: #fdeded;
+  color: #a94442;
+}
+
+body[data-theme="dark"] .notification.error {
+  background-color: #5c3735;
+  color: #f2baba;
 }
 
 @keyframes slideInFadeOut {
@@ -316,30 +484,86 @@ body[data-theme="light"] {
   .navbar {
     flex-direction: column;
     align-items: flex-start;
-    padding: 10px;
+    padding: 10px 15px; /* Smanjen padding za uži navbar */
+    position: relative; /* Omogućava da sadržaj ne ide ispod fiksiranog navbara ako postane previsok */
+  }
+  .navbar .logo {
+    margin-bottom: 10px; /* Dodat razmak ispod logotipa */
   }
   .navbar .tools {
-    margin-top: 10px;
+    margin-top: 0; /* Uklonjen gornji margin, logo će dati razmak */
     display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
+    flex-wrap: wrap; /* Omogućava prelamanje dugmića */
+    gap: 8px; /* Smanjen razmak između dugmića */
+    width: 100%; /* Alati zauzimaju punu širinu */
   }
   .navbar .tools button,
   .navbar .tools .tool-button {
     margin-left: 0;
-    padding: 6px 10px;
-    font-size: 0.8em;
+    padding: 8px 12px;
+    font-size: 0.9em; /* Malo veći font za bolju čitljivost */
+    flex-grow: 1; /* Omogućava dugmićima da se šire i popune red */
+    min-width: 120px; /* Minimalna širina da tekst ne bude previše stisnut */
   }
+
+  /* Prilagođavanje visine radnog prostora na osnovu dinamičke visine navbara */
+  /* Ovo će zahtevati JS da izračuna visinu navbara i postavi --navbar-height CSS varijablu */
   #workspace {
-    top: 100px;
-    height: calc(100vh - 100px);
+    top: calc(
+      var(--navbar-height, 120px) + 5px
+    ); /* Koristi CSS varijablu, sa fallback vrednošću */
+    height: calc(100vh - (var(--navbar-height, 120px) + 5px));
   }
+
   .node {
     min-width: 120px;
-    padding: 10px;
+    padding: 12px;
+    min-height: 40px; /* Smanjena minimalna visina */
   }
   .node-title {
     font-size: 1em;
+  }
+  .node-description {
+    font-size: 0.85em;
+  }
+  .context-menu {
+    min-width: 160px; /* Smanjena minimalna širina */
+    font-size: 0.9em; /* Smanjen font za kompaktniji meni */
+  }
+  .context-menu li {
+    padding: 8px 15px; /* Smanjen padding */
+    gap: 8px; /* Smanjen razmak */
+  }
+  #notification-area {
+    bottom: 15px;
+    right: 15px;
+    width: calc(100% - 30px); /* Notifikacije zauzimaju skoro celu širinu */
+  }
+  .notification {
+    padding: 10px 15px;
+    font-size: 0.9em;
+  }
+}
+
+/* Dodatni media query za veoma male ekrane */
+@media (max-width: 480px) {
+  .navbar .tools button,
+  .navbar .tools .tool-button {
+    font-size: 0.85em; /* Još manji font za dugmiće */
+    padding: 6px 10px;
+    gap: 5px; /* Manji razmak unutar dugmeta */
+    min-width: auto; /* Uklanja minimalnu širinu da bi se bolje smestili */
+  }
+  .navbar .tools button i,
+  .navbar .tools .tool-button i {
+    margin-right: 3px; /* Manji razmak za ikonicu */
+  }
+  .node {
+    padding: 10px;
+    min-width: 100px;
+  }
+  .node-title {
+    font-size: 0.95em;
   }
   .node-description {
     font-size: 0.8em;
