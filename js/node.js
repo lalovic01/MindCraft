@@ -69,13 +69,29 @@ class Node {
     const titleElement = this.element.querySelector(".node-title");
     const descriptionElement = this.element.querySelector(".node-description");
 
+    // Mouse event for dragging
     this.element.addEventListener("mousedown", (event) => {
-      if (event.button !== 0 || app.isConnectingMode()) return;
+      if (event.button !== 0 || app.isConnectingMode()) return; // Only left click
       if (event.target.closest('[contenteditable="true"]')) return;
 
       event.stopPropagation();
       app.initiateDrag(this, event);
     });
+
+    // Touch event for dragging
+    this.element.addEventListener(
+      "touchstart",
+      (event) => {
+        if (app.isConnectingMode()) return;
+        if (event.target.closest('[contenteditable="true"]')) return;
+
+        // Prevent default touch action like scrolling when starting drag on a node
+        // event.preventDefault(); // Consider if this is needed or if it interferes with text selection/scrolling within node
+        event.stopPropagation();
+        app.initiateDrag(this, event);
+      },
+      { passive: false }
+    ); // passive: false allows preventDefault if needed later
 
     titleElement.addEventListener("blur", () =>
       this.updateContent(titleElement.textContent, this.description)
@@ -106,6 +122,10 @@ class Node {
         this.element.classList.remove("dragging-ended-recently");
         return;
       }
+      // Prevent node selection if it was a drag operation that just ended
+      // This check might be more robust if handled within app.js endDrag
+      if (app.wasDragging()) return;
+
       e.stopPropagation();
       app.selectNode(this);
     });

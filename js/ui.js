@@ -5,10 +5,22 @@ const workspace = document.getElementById("workspace");
 const nodeLayer = document.getElementById("node-layer");
 const connectorLayer = document.getElementById("connector-layer");
 const contextColorPicker = document.getElementById("context-color-picker");
+const navbar = document.querySelector(".navbar"); // Dodato
 
 let currentTheme = "light";
 let contextMenuVisible = false;
 let contextTargetNode = null;
+
+// Funkcija za ažuriranje visine navbara
+function updateNavbarHeight() {
+  if (navbar) {
+    const navbarHeight = navbar.offsetHeight;
+    document.documentElement.style.setProperty(
+      "--navbar-height",
+      `${navbarHeight}px`
+    );
+  }
+}
 
 function applyTheme(theme) {
   document.body.setAttribute("data-theme", theme);
@@ -29,23 +41,39 @@ function toggleTheme() {
 }
 
 function showNotification(message, type = "info") {
+  // type can be 'info', 'success', 'error', 'warning'
   const notification = document.createElement("div");
-  notification.className = `notification ${type}`;
+  notification.className = `notification ${type}`; // Use type for class
   notification.textContent = message;
   notificationArea.appendChild(notification);
 
-  setTimeout(() => {
+  // Clear previous timeouts if any for this specific notification (optional, for rapid notifications)
+  if (notification.animationTimeout)
+    clearTimeout(notification.animationTimeout);
+  if (notification.removeTimeout) clearTimeout(notification.removeTimeout);
+
+  // Force reflow to ensure animation plays
+  void notification.offsetWidth;
+
+  notification.style.opacity = "1"; // Set target opacity for animation start
+  notification.style.transform = "translateY(0)"; // Set target transform for animation start
+
+  notification.animationTimeout = setTimeout(() => {
     notification.style.opacity = "0";
-    notification.style.transform = "translateY(-10px)";
-    setTimeout(() => notification.remove(), 500);
-  }, 3500);
+    notification.style.transform = "translateY(-10px) scale(0.95)";
+    notification.removeTimeout = setTimeout(() => notification.remove(), 500); // Matches CSS animation fade-out
+  }, 3500); // Keep notification visible for 3.5s before starting fade out
 }
 
 function showContextMenu(x, y, targetNode) {
   contextTargetNode = targetNode;
   contextMenu.style.left = `${x}px`;
   contextMenu.style.top = `${y}px`;
-  contextMenu.style.display = "block";
+  contextMenu.style.display = "block"; // Set display before adding class for transition
+  requestAnimationFrame(() => {
+    // Ensure display:block is applied before class
+    contextMenu.classList.add("visible");
+  });
   contextMenuVisible = true;
 
   const connectOption = contextMenu.querySelector('li[data-action="connect"]');
@@ -62,7 +90,11 @@ function showContextMenu(x, y, targetNode) {
 
 function hideContextMenu() {
   if (contextMenuVisible) {
-    contextMenu.style.display = "none";
+    contextMenu.classList.remove("visible");
+    // Wait for animation to finish before setting display to none
+    setTimeout(() => {
+      contextMenu.style.display = "none";
+    }, 200); // Matches transition duration in CSS for opacity/transform
     contextMenuVisible = false;
     contextTargetNode = null;
   }
@@ -121,6 +153,11 @@ function initUI() {
     } else {
     }
   });
+
+  // Poziv za inicijalno postavljanje visine navbara
+  updateNavbarHeight();
+  // Dodavanje event listener-a za promenu veličine prozora
+  window.addEventListener("resize", updateNavbarHeight);
 
   console.log("UI Initialized");
 }

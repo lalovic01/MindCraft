@@ -19,6 +19,12 @@ const app = (function () {
 
   let isConnecting = false;
   let connectionStartNode = null;
+  let lastDragEndTime = 0; // Timestamp of the last drag end
+
+  function wasDragging() {
+    // Consider a drag operation if it ended very recently (e.g., within 100ms)
+    return Date.now() - lastDragEndTime < 100;
+  }
 
   function isConnectingMode() {
     return isConnecting;
@@ -40,15 +46,28 @@ const app = (function () {
     importJsonInput.addEventListener("change", importMapJson);
     exportPngButton.addEventListener("click", exportMapPng);
 
-    workspace.addEventListener("mousedown", startPan);
-    workspace.addEventListener("mouseup", endPan);
-    workspace.addEventListener("wheel", zoom);
+    // Mouse pan events
+    workspace.addEventListener("mousedown", handlePanStart);
+    // Touch pan events
+    workspace.addEventListener("touchstart", handlePanStart, {
+      passive: false,
+    });
 
-    window.addEventListener("mousemove", handleMouseMove);
+    // Mouse move for drag/pan
+    window.addEventListener("mousemove", handleGenericMove);
+    // Touch move for drag/pan
+    window.addEventListener("touchmove", handleGenericMove, { passive: false });
 
-    window.addEventListener("mouseup", handleMouseUp);
+    // Mouse up for ending drag/pan
+    window.addEventListener("mouseup", handleGenericEnd);
+    // Touch up for ending drag/pan
+    window.addEventListener("touchend", handleGenericEnd);
+    window.addEventListener("touchcancel", handleGenericEnd);
+
+    workspace.addEventListener("wheel", zoom, { passive: false });
 
     workspace.addEventListener("click", (e) => {
+      if (wasDragging()) return; // If a drag just ended, don't deselect/cancel connection
       if (
         e.target === workspace ||
         e.target === nodeLayer ||
@@ -106,6 +125,11 @@ const app = (function () {
   }
 
   function selectNode(nodeToSelect) {
+    if (wasDragging() && selectedNode === nodeToSelect) {
+      // If it was a drag of the currently selected node, don't re-process selection
+      return;
+    }
+
     if (
       isConnecting &&
       connectionStartNode &&
@@ -136,39 +160,49 @@ const app = (function () {
 
   function initiateDrag(node, event) {
     if (isPanning) return;
+    // For touch events, event.button is undefined.
+    if (event.type === "mousedown" && event.button !== 0) return;
 
     console.log("Initiating drag for node:", node.id);
     isDraggingNode = true;
-    selectNode(node);
+    selectNode(node); // Select the node being dragged
     node.getElement().classList.add("dragging");
     workspace.style.cursor = "grabbing";
 
     const nodeRect = node.getElement().getBoundingClientRect();
+    const clientX = event.type.startsWith("touch")
+      ? event.touches[0].clientX
+      : event.clientX;
+    const clientY = event.type.startsWith("touch")
+      ? event.touches[0].clientY
+      : event.clientY;
 
-    const mouseX_viewport = event.clientX;
-    const mouseY_viewport = event.clientY;
-
-    const offsetX_viewport = mouseX_viewport - nodeRect.left;
-    const offsetY_viewport = mouseY_viewport - nodeRect.top;
+    const offsetX_viewport = clientX - nodeRect.left;
+    const offsetY_viewport = clientY - nodeRect.top;
 
     dragOffsetX = offsetX_viewport / viewTransform.scale;
     dragOffsetY = offsetY_viewport / viewTransform.scale;
 
     console.log("Drag Offset X:", dragOffsetX, "Y:", dragOffsetY);
+    if (event.type.startsWith("touch")) {
+      event.preventDefault(); // Prevent scrolling while dragging a node
+    }
   }
 
   function dragNode(event) {
     if (!isDraggingNode || !selectedNode) return;
-    event.preventDefault();
+    // No preventDefault here, as it's called in handleGenericMove for touchmove
 
     const workspaceRect = workspace.getBoundingClientRect();
-    const mouseX_viewport = event.clientX;
-    const mouseY_viewport = event.clientY;
+    const clientX = event.type.startsWith("touch")
+      ? event.touches[0].clientX
+      : event.clientX;
+    const clientY = event.type.startsWith("touch")
+      ? event.touches[0].clientY
+      : event.clientY;
 
-    const mouseX_relative_to_workspace_viewport =
-      mouseX_viewport - workspaceRect.left;
-    const mouseY_relative_to_workspace_viewport =
-      mouseY_viewport - workspaceRect.top;
+    const mouseX_relative_to_workspace_viewport = clientX - workspaceRect.left;
+    const mouseY_relative_to_workspace_viewport = clientY - workspaceRect.top;
 
     const mouseX_in_nodelayer =
       (mouseX_relative_to_workspace_viewport - viewTransform.x) /
@@ -188,8 +222,18 @@ const app = (function () {
   function endDragNode() {
     if (!isDraggingNode || !selectedNode) return;
     console.log("Ending drag for node:", selectedNode.id);
+    lastDragEndTime = Date.now(); // Record drag end time
     const draggedNodeElement = selectedNode.getElement();
     draggedNodeElement.classList.remove("dragging");
+
+    // Add class to trigger bounce animation
+    draggedNodeElement.classList.add("dropped");
+    // Remove the class after the animation completes
+    setTimeout(() => {
+      if (draggedNodeElement) {
+        draggedNodeElement.classList.remove("dropped");
+      }
+    }, 500); // Duration of the dragBounceDrop animation
 
     draggedNodeElement.classList.add("dragging-ended-recently");
     setTimeout(() => {
@@ -201,24 +245,26 @@ const app = (function () {
     isDraggingNode = false;
 
     if (!isPanning) {
+      // Check isPanning, not event type, as pan might also end
       workspace.style.cursor = "grab";
     }
     saveState();
   }
 
-  function handleMouseMove(event) {
+  function handleGenericMove(event) {
     if (isDraggingNode) {
+      if (event.type === "touchmove") event.preventDefault(); // Prevent scroll during drag
       dragNode(event);
     } else if (isPanning) {
+      if (event.type === "touchmove") event.preventDefault(); // Prevent scroll during pan
       pan(event);
     }
   }
 
-  function handleMouseUp(event) {
+  function handleGenericEnd(event) {
     if (isDraggingNode) {
       endDragNode();
     }
-
     if (isPanning) {
       endPan();
     }
@@ -231,7 +277,8 @@ const app = (function () {
       startConnection(selectedNode);
     } else {
       showNotification(
-        "Prvo selektujte čvor iz kojeg želite da povučete vezu."
+        "Prvo selektujte čvor iz kojeg želite da povučete vezu.",
+        "warning" // Added type
       );
     }
   }
@@ -270,7 +317,7 @@ const app = (function () {
         (conn.fromNodeId === toNode.id && conn.toNodeId === fromNode.id)
     );
     if (existing) {
-      showNotification("Ova dva čvora su već povezana.");
+      showNotification("Ova dva čvora su već povezana.", "warning"); // Added type
       return;
     }
 
@@ -290,7 +337,8 @@ const app = (function () {
     connectorLayer.appendChild(line);
     updateConnectorPosition(newConnector);
     showNotification(
-      `Povezani čvorovi: "${fromNode.title}" i "${toNode.title}".`
+      `Povezani čvorovi: "${fromNode.title}" i "${toNode.title}".`,
+      "success" // Added type
     );
     saveState();
   }
@@ -365,37 +413,64 @@ const app = (function () {
     connectorLayer.style.transform = `translate(${viewTransform.x}px, ${viewTransform.y}px) scale(${viewTransform.scale})`;
   }
 
-  function startPan(event) {
+  function handlePanStart(event) {
     const isNodeTarget = event.target.closest(".node");
-    if (isDraggingNode || isConnecting || isNodeTarget) return;
+    // For touch events, event.button is undefined.
+    // For mousedown, check event.button.
+    const isPrimaryAction =
+      event.type === "touchstart" ||
+      (event.type === "mousedown" && event.button === 0);
+    const isMiddleMousePan =
+      event.type === "mousedown" && event.button === 1 && !isDraggingNode;
 
-    if (event.button === 0) {
+    if (
+      isDraggingNode ||
+      isConnecting ||
+      isNodeTarget ||
+      !(isPrimaryAction || isMiddleMousePan)
+    )
+      return;
+
+    if (event.type === "mousedown" && event.button === 0) {
       if (
         document.activeElement &&
         document.activeElement.closest('[contenteditable="true"]')
       ) {
-        return;
+        return; // Don't pan if starting on editable content
       }
-      isPanning = true;
-      panStartX = event.clientX - viewTransform.x;
-      panStartY = event.clientY - viewTransform.y;
-      workspace.classList.add("panning");
-      workspace.style.cursor = "grabbing";
-    } else if (event.button === 1 && !isDraggingNode) {
-      event.preventDefault();
-      isPanning = true;
-      panStartX = event.clientX - viewTransform.x;
-      panStartY = event.clientY - viewTransform.y;
-      workspace.classList.add("panning");
-      workspace.style.cursor = "grabbing";
     }
+
+    if (event.type.startsWith("touch")) {
+      event.preventDefault(); // Prevent default touch actions like scrolling or zooming
+    }
+
+    isPanning = true;
+    const clientX = event.type.startsWith("touch")
+      ? event.touches[0].clientX
+      : event.clientX;
+    const clientY = event.type.startsWith("touch")
+      ? event.touches[0].clientY
+      : event.clientY;
+
+    panStartX = clientX - viewTransform.x;
+    panStartY = clientY - viewTransform.y;
+    workspace.classList.add("panning");
+    workspace.style.cursor = "grabbing";
   }
 
   function pan(event) {
     if (!isPanning) return;
-    event.preventDefault();
-    viewTransform.x = event.clientX - panStartX;
-    viewTransform.y = event.clientY - panStartY;
+    // No preventDefault here, as it's called in handleGenericMove for touchmove
+
+    const clientX = event.type.startsWith("touch")
+      ? event.touches[0].clientX
+      : event.clientX;
+    const clientY = event.type.startsWith("touch")
+      ? event.touches[0].clientY
+      : event.clientY;
+
+    viewTransform.x = clientX - panStartX;
+    viewTransform.y = clientY - panStartY;
     applyViewTransform();
   }
 
@@ -407,7 +482,12 @@ const app = (function () {
   }
 
   function zoom(event) {
-    if (isPanning || (event.buttons & 4) === 4) {
+    // Prevent zoom if a pan just ended (middle mouse release might trigger wheel)
+    if (
+      isPanning ||
+      (event.buttons & 4) === 4 ||
+      Date.now() - lastDragEndTime < 50
+    ) {
       return;
     }
     event.preventDefault();
@@ -506,8 +586,10 @@ const app = (function () {
       }
 
       console.log("Application state loaded.");
-      showNotification("Prethodna mapa uspešno učitana.");
+      showNotification("Prethodna mapa uspešno učitana.", "success"); // Added type
     } else {
+      // Optional: Show a notification if no data was loaded
+      // showNotification("Započnite kreiranjem nove ideje!", "info");
     }
   }
 
@@ -545,7 +627,7 @@ const app = (function () {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showNotification("Mapa eksportovana u JSON fajl.");
+    showNotification("Mapa eksportovana u JSON fajl.", "success"); // Added type
   }
 
   function importMapJson(event) {
@@ -599,7 +681,7 @@ const app = (function () {
           connectors = loadedConnectors;
           redrawAllConnectors();
 
-          showNotification("Mapa uspešno uvezena iz JSON fajla.");
+          showNotification("Mapa uspešno uvezena iz JSON fajla.", "success"); // Added type
           saveState();
         } else {
           throw new Error("Nevažeći format JSON fajla.");
@@ -615,7 +697,7 @@ const app = (function () {
   }
 
   function exportMapPng() {
-    showNotification("Priprema PNG eksport...");
+    showNotification("Priprema PNG eksport..."); // Default info type
 
     if (typeof domtoimage === "undefined") {
       console.error("dom-to-image-more library is not loaded!");
@@ -641,7 +723,7 @@ const app = (function () {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        showNotification("Mapa eksportovana kao PNG slika.");
+        showNotification("Mapa eksportovana kao PNG slika.", "success"); // Added type
       })
       .catch(function (error) {
         console.error("Greška tokom dom-to-image eksporta:", error);
@@ -663,6 +745,7 @@ const app = (function () {
     startConnection: startConnection,
     initiateDrag: initiateDrag,
     isConnectingMode: isConnectingMode,
+    wasDragging: wasDragging, // Expose wasDragging
   };
 })();
 
