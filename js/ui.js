@@ -5,13 +5,13 @@ const workspace = document.getElementById("workspace");
 const nodeLayer = document.getElementById("node-layer");
 const connectorLayer = document.getElementById("connector-layer");
 const contextColorPicker = document.getElementById("context-color-picker");
-const navbar = document.querySelector(".navbar"); // Dodato
+const navbar = document.querySelector(".navbar");
 
 let currentTheme = "light";
 let contextMenuVisible = false;
 let contextTargetNode = null;
+let tippyInstances = [];
 
-// Funkcija za ažuriranje visine navbara
 function updateNavbarHeight() {
   if (navbar) {
     const navbarHeight = navbar.offsetHeight;
@@ -38,40 +38,44 @@ function toggleTheme() {
   showNotification(
     `Tema promenjena u ${newTheme === "dark" ? "tamnu" : "svetlu"}.`
   );
+
+  const newTippyTheme = newTheme === "dark" ? "dark" : "light";
+  if (tippyInstances && tippyInstances.length > 0) {
+    tippyInstances.forEach((instance) => {
+      instance.setProps({ theme: newTippyTheme });
+    });
+    console.log(`Tippy themes updated to: ${newTippyTheme}`);
+  }
 }
 
 function showNotification(message, type = "info") {
-  // type can be 'info', 'success', 'error', 'warning'
   const notification = document.createElement("div");
-  notification.className = `notification ${type}`; // Use type for class
+  notification.className = `notification ${type}`;
   notification.textContent = message;
   notificationArea.appendChild(notification);
 
-  // Clear previous timeouts if any for this specific notification (optional, for rapid notifications)
   if (notification.animationTimeout)
     clearTimeout(notification.animationTimeout);
   if (notification.removeTimeout) clearTimeout(notification.removeTimeout);
 
-  // Force reflow to ensure animation plays
   void notification.offsetWidth;
 
-  notification.style.opacity = "1"; // Set target opacity for animation start
-  notification.style.transform = "translateY(0)"; // Set target transform for animation start
+  notification.style.opacity = "1";
+  notification.style.transform = "translateY(0)";
 
   notification.animationTimeout = setTimeout(() => {
     notification.style.opacity = "0";
     notification.style.transform = "translateY(-10px) scale(0.95)";
-    notification.removeTimeout = setTimeout(() => notification.remove(), 500); // Matches CSS animation fade-out
-  }, 3500); // Keep notification visible for 3.5s before starting fade out
+    notification.removeTimeout = setTimeout(() => notification.remove(), 500);
+  }, 3500);
 }
 
 function showContextMenu(x, y, targetNode) {
   contextTargetNode = targetNode;
   contextMenu.style.left = `${x}px`;
   contextMenu.style.top = `${y}px`;
-  contextMenu.style.display = "block"; // Set display before adding class for transition
+  contextMenu.style.display = "block";
   requestAnimationFrame(() => {
-    // Ensure display:block is applied before class
     contextMenu.classList.add("visible");
   });
   contextMenuVisible = true;
@@ -91,10 +95,9 @@ function showContextMenu(x, y, targetNode) {
 function hideContextMenu() {
   if (contextMenuVisible) {
     contextMenu.classList.remove("visible");
-    // Wait for animation to finish before setting display to none
     setTimeout(() => {
       contextMenu.style.display = "none";
-    }, 200); // Matches transition duration in CSS for opacity/transform
+    }, 200);
     contextMenuVisible = false;
     contextTargetNode = null;
   }
@@ -154,10 +157,76 @@ function initUI() {
     }
   });
 
-  // Poziv za inicijalno postavljanje visine navbara
   updateNavbarHeight();
-  // Dodavanje event listener-a za promenu veličine prozora
   window.addEventListener("resize", updateNavbarHeight);
+
+  if (typeof tippy === "function") {
+    const tippyTheme = currentTheme === "dark" ? "dark" : "light";
+
+    if (tippyInstances && tippyInstances.length > 0) {
+      tippyInstances.forEach((instance) => instance.destroy());
+      tippyInstances = [];
+    }
+
+    const newInstances = tippy(
+      ".navbar .tools button[title], .navbar .tools .tool-button[title]",
+      {
+        animation: "scale-subtle",
+        placement: "bottom",
+        theme: tippyTheme,
+        appendTo: () => document.body,
+        zIndex: 9999,
+        content(reference) {
+          let content = reference.getAttribute("data-tippy-original-title");
+          if (!content && reference.hasAttribute("title")) {
+            content = reference.getAttribute("title");
+            reference.setAttribute("data-tippy-original-title", content);
+          }
+          console.log(
+            `Tippy content function for element: ${
+              reference.id || "untitled"
+            }. Determined content: "${content || ""}"`
+          );
+          return content || "";
+        },
+        onShow(instance) {
+          const el = instance.reference;
+          if (el.hasAttribute("title")) {
+            if (!el.hasAttribute("data-tippy-original-title")) {
+              el.setAttribute(
+                "data-tippy-original-title",
+                el.getAttribute("title")
+              );
+            }
+            el.removeAttribute("title");
+            console.log(`Removed title from ${el.id || "element"} in onShow.`);
+          }
+        },
+        onHide(instance) {
+          const el = instance.reference;
+          const originalTitle = el.getAttribute("data-tippy-original-title");
+          if (originalTitle && !el.hasAttribute("title")) {
+            el.setAttribute("title", originalTitle);
+            console.log(`Restored title to ${el.id || "element"} in onHide.`);
+          }
+        },
+      }
+    );
+
+    if (newInstances) {
+      tippyInstances = Array.isArray(newInstances)
+        ? newInstances
+        : [newInstances];
+    } else {
+      tippyInstances = [];
+    }
+
+    console.log(
+      `Tippy.js initialized for navbar tools with theme: ${tippyTheme}. Instances: ${tippyInstances.length}`
+    );
+  } else {
+    console.warn("Tippy.js not loaded, tooltips will be native.");
+  }
 
   console.log("UI Initialized");
 }
