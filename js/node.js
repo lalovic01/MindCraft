@@ -34,28 +34,26 @@ class Node {
   createElement() {
     const nodeElement = document.createElement("div");
     nodeElement.classList.add("node");
-    nodeElement.dataset.id = this.id;
+    nodeElement.dataset.id = this.id; // Osiguravamo da je dataset.id postavljen
     nodeElement.style.backgroundColor = this.color;
 
     nodeElement.innerHTML = `
-            <div class="node-header">
-                ${
-                  this.icon
-                    ? `<span class="node-icon">${
-                        this.icon.startsWith("fa-")
-                          ? `<i class="fas ${this.icon}"></i>`
-                          : this.icon
-                      }</span>`
-                    : ""
-                }
-                <div class="node-title" contenteditable="true">${
-                  this.title
-                }</div>
-            </div>
-            <div class="node-description" contenteditable="true" placeholder="Dodaj opis...">${
-              this.description
-            }</div>
-        `;
+      <div class="node-header">
+        ${
+          this.icon
+            ? `<span class="node-icon">${
+                this.icon.startsWith("fa-")
+                  ? `<i class="fas ${this.icon}"></i>`
+                  : this.icon
+              }</span>`
+            : ""
+        }
+        <div class="node-title" contenteditable="true">${this.title}</div>
+      </div>
+      <div class="node-description" contenteditable="true" placeholder="Dodaj opis...">${
+        this.description
+      }</div>
+    `;
 
     const descElement = nodeElement.querySelector(".node-description");
     if (!this.description) {

@@ -79,6 +79,30 @@ const app = (function () {
         }
       }
     });
+
+    workspace.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      const targetNodeElement = event.target.closest(".node");
+      if (!targetNodeElement) {
+        console.warn("Desni klik nije detektovao čvor.");
+        return; // Ako nema čvora, ne otvaramo meni
+      }
+
+      const nodeId = targetNodeElement.dataset.id;
+      if (!nodeId) {
+        console.error("Čvor nema dataset.id:", targetNodeElement);
+        return; // Ako dataset.id nije postavljen, ne otvaramo meni
+      }
+
+      const targetNodeInstance = app.findNodeById(nodeId);
+      if (!targetNodeInstance) {
+        console.error("Čvor nije pronađen u aplikaciji za ID:", nodeId);
+        return; // Ako čvor nije pronađen, ne otvaramo meni
+      }
+
+      console.log("Pronađen čvor za kontekstualni meni:", targetNodeInstance);
+      showContextMenu(event.clientX, event.clientY, targetNodeInstance);
+    });
   }
 
   function addNode(x, y) {

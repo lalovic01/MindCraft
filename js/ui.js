@@ -71,6 +71,13 @@ function showNotification(message, type = "info") {
 }
 
 function showContextMenu(x, y, targetNode) {
+  if (!targetNode) {
+    console.warn("Kontekstualni meni otvoren bez ciljnog čvora.");
+    return; // Ako nema ciljnog čvora, ne otvaramo meni
+  }
+
+  console.log("Otvaranje kontekstualnog menija za čvor:", targetNode);
+
   contextTargetNode = targetNode;
   contextMenu.style.left = `${x}px`;
   contextMenu.style.top = `${y}px`;
@@ -92,14 +99,16 @@ function showContextMenu(x, y, targetNode) {
   );
 }
 
-function hideContextMenu() {
+function hideContextMenu(resetTarget = true) {
   if (contextMenuVisible) {
     contextMenu.classList.remove("visible");
     setTimeout(() => {
       contextMenu.style.display = "none";
+      if (resetTarget) {
+        contextTargetNode = null; // Resetujemo samo ako je resetTarget true
+      }
     }, 200);
     contextMenuVisible = false;
-    contextTargetNode = null;
   }
 }
 
@@ -129,32 +138,51 @@ function initUI() {
     if (!actionItem) return;
 
     const action = actionItem.dataset.action;
-    hideContextMenu();
 
-    if (contextTargetNode) {
-      switch (action) {
-        case "edit":
-          contextTargetNode.focusTitle();
-          break;
-        case "connect":
-          app.startConnection(contextTargetNode);
-          break;
-        case "color":
-          contextColorPicker.oninput = (e) => {
-            contextTargetNode.setColor(e.target.value);
-            app.saveState();
-          };
-          contextColorPicker.click();
-          break;
-        case "delete":
-          app.deleteNode(contextTargetNode);
-          break;
-        case "history":
-          showNotification("Istorija izmena još nije implementirana.");
-          break;
-      }
-    } else {
+    // Sakrivamo meni, ali ne resetujemo odmah contextTargetNode
+    hideContextMenu(false);
+
+    if (!contextTargetNode) {
+      console.error("Nema odabranog čvora za akciju.");
+      return;
     }
+
+    console.log(`Izvršavanje akcije "${action}" za čvor:`, contextTargetNode);
+
+    switch (action) {
+      case "edit":
+        // Fokusira naslov čvora za uređivanje
+        contextTargetNode.focusTitle();
+        break;
+      case "connect":
+        // Pokreće režim povezivanja iz odabranog čvora
+        app.startConnection(contextTargetNode);
+        break;
+      case "color":
+        // Otvara color picker za promenu boje čvora
+        contextColorPicker.oninput = (e) => {
+          contextTargetNode.setColor(e.target.value);
+          app.saveState();
+        };
+        contextColorPicker.click();
+        break;
+      case "delete":
+        // Briše odabrani čvor
+        app.deleteNode(contextTargetNode);
+        break;
+      case "history":
+        // Prikazuje placeholder za istoriju izmena
+        showNotification(
+          `Istorija izmena za "${contextTargetNode.title}" nije implementirana.`,
+          "info"
+        );
+        break;
+      default:
+        console.warn(`Nepoznata akcija: ${action}`);
+    }
+
+    // Resetujemo contextTargetNode nakon što se akcija završi
+    contextTargetNode = null;
   });
 
   updateNavbarHeight();
