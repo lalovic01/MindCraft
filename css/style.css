@@ -7,7 +7,7 @@
 }
 
 :root {
-  --background-light: #e0e5ec; /* Neumorphism light bg */
+  --background-light: #e0e5ec;
   --surface-light: #ffffff;
   --text-light: #333;
   --primary-light: #007bff;
@@ -15,12 +15,12 @@
   --shadow-light-outer: rgba(0, 0, 0, 0.1);
   --shadow-light-inner-top: rgba(255, 255, 255, 0.7);
   --shadow-light-inner-bottom: rgba(0, 0, 0, 0.05);
-  --connector-light: #495057; /* Malo tamniji konektor za svetlu temu */
+  --connector-light: #495057;
   --glass-light-bg: rgba(255, 255, 255, 0.5);
   --glass-light-blur: 10px;
   --glass-light-border: rgba(255, 255, 255, 0.3);
 
-  --background-dark: #2c3e50; /* Neumorphism dark bg */
+  --background-dark: #2c3e50;
   --surface-dark: #34495e;
   --text-dark: #ecf0f1;
   --primary-dark: #3498db;
@@ -28,13 +28,13 @@
   --shadow-dark-outer: rgba(0, 0, 0, 0.3);
   --shadow-dark-inner-top: rgba(255, 255, 255, 0.05);
   --shadow-dark-inner-bottom: rgba(0, 0, 0, 0.2);
-  --connector-dark: #dee2e6; /* Svetliji konektor za tamnu temu */
+  --connector-dark: #dee2e6;
   --glass-dark-bg: rgba(44, 62, 80, 0.6);
   --glass-dark-blur: 10px;
   --glass-dark-border: rgba(255, 255, 255, 0.1);
 
   --font-family: "Poppins", sans-serif;
-  --border-radius: 12px; /* Increased border radius */
+  --border-radius: 12px;
   --transition-speed: 0.3s;
   --animation-speed-fast: 0.2s;
   --animation-speed-medium: 0.4s;
@@ -90,12 +90,12 @@ body[data-theme="light"] {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 25px; /* Slightly increased padding */
+  padding: 12px 25px;
   background-color: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border-bottom: 1px solid var(--glass-border);
-  box-shadow: 0 2px 10px var(--shadow-main-outer); /* Softer shadow */
+  box-shadow: 0 2px 10px var(--shadow-main-outer);
   color: var(--text-main);
   position: fixed;
   top: 0;
@@ -108,7 +108,7 @@ body[data-theme="light"] {
 }
 
 .navbar .logo {
-  font-size: 1.6em; /* Slightly larger logo */
+  font-size: 1.6em;
   font-weight: 600;
 }
 
@@ -117,28 +117,28 @@ body[data-theme="light"] {
   background-color: var(--primary-main);
   color: white;
   border: none;
-  padding: 10px 18px; /* Increased padding */
-  margin-left: 12px; /* Increased margin */
+  padding: 10px 18px;
+  margin-left: 12px;
   border-radius: var(--border-radius);
   cursor: pointer;
-  font-size: 0.95em; /* Slightly larger font */
+  font-size: 0.95em;
   transition: background-color var(--transition-speed) ease,
     transform var(--animation-speed-fast) ease;
   display: inline-flex;
   align-items: center;
-  gap: 8px; /* Increased gap */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for buttons */
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .navbar .tools button:hover,
 .navbar .tools .tool-button:hover {
   background-color: var(--primary-hover-main);
-  transform: translateY(-2px); /* Hover effect */
+  transform: translateY(-2px);
 }
 
 .navbar .tools button:active,
 .navbar .tools .tool-button:active {
-  transform: translateY(0px); /* Click effect */
+  transform: translateY(0px);
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
@@ -149,10 +149,10 @@ body[data-theme="light"] {
 
 #workspace {
   position: absolute;
-  top: 70px; /* Adjusted for new navbar height */
+  top: 70px;
   left: 0;
   width: 100%;
-  height: calc(100vh - 70px); /* Adjusted for new navbar height */
+  height: calc(100vh - 70px);
   background-color: var(--background-main);
   overflow: hidden;
   cursor: grab;
@@ -187,7 +187,7 @@ body[data-theme="light"] {
 
 .connector-line {
   stroke: var(--connector-main);
-  stroke-width: 2.5; /* Slightly thicker */
+  stroke-width: 2.5;
   fill: none;
   transition: stroke var(--transition-speed) ease;
 }
@@ -204,9 +204,9 @@ body[data-theme="light"] {
   min-width: 160px;
   min-height: 60px;
   box-shadow: 0 5px 15px var(--shadow-main-outer),
-    /* Outer shadow */ inset 1px 1px 2px var(--shadow-main-inner-top),
-    /* Inner highlight */ inset -1px -1px 2px var(--shadow-main-inner-bottom); /* Inner shadow */
-  cursor: grab; /* Changed from move for consistency */
+    inset 1px 1px 2px var(--shadow-main-inner-top),
+    inset -1px -1px 2px var(--shadow-main-inner-bottom);
+  cursor: grab;
   z-index: 10;
   display: flex;
   flex-direction: column;
@@ -293,7 +293,7 @@ body[data-theme="light"] {
 
 .node.connecting-start {
   border: 2px dashed var(--primary-main);
-  animation: pulseBorder 1.2s infinite; /* Pulse border for connecting node */
+  animation: pulseBorder 1.2s infinite;
 }
 
 @keyframes pulseBorder {
@@ -317,19 +317,19 @@ body[data-theme="light"] {
 
 .node-title {
   font-weight: 600;
-  font-size: 1.15em; /* Slightly larger */
+  font-size: 1.15em;
   outline: none;
   flex-grow: 1;
-  padding: 6px; /* Increased padding */
-  border-radius: 6px; /* Softer radius */
-  background-color: transparent; /* Ensure it's transparent for glass effect */
-  color: inherit; /* Inherit color from node */
-  caret-color: var(--text-main); /* Dodata boja kursora */
+  padding: 6px;
+  border-radius: 6px;
+  background-color: transparent;
+  color: inherit;
+  caret-color: var(--text-main);
 }
 
 .node-title:focus {
-  background-color: rgba(0, 123, 255, 0.15); /* Slightly more visible focus */
-  box-shadow: 0 0 0 2px var(--primary-main); /* Focus ring */
+  background-color: rgba(0, 123, 255, 0.15);
+  box-shadow: 0 0 0 2px var(--primary-main);
 }
 
 .node-icon {
@@ -339,21 +339,20 @@ body[data-theme="light"] {
 }
 
 .node-description {
-  font-size: 0.95em; /* Slightly larger */
-  margin-top: 8px; /* Increased margin */
+  font-size: 0.95em;
+  margin-top: 8px;
   outline: none;
-  padding: 6px; /* Increased padding */
-  border-radius: 6px; /* Softer radius */
-  min-height: 22px; /* Slightly taller */
-  background-color: transparent; /* Ensure it's transparent for glass effect */
-  color: inherit; /* Inherit color from node */
-  caret-color: var(--text-main); /* Dodata boja kursora */
+  padding: 6px;
+  border-radius: 6px;
+  min-height: 22px;
+  background-color: transparent;
+  color: inherit;
+  caret-color: var(--text-main);
 }
 
 .node-description.empty::before {
   content: attr(placeholder);
-  /* Za svetlu temu, koristićemo tamniju sivu boju */
-  color: #6c757d; /* Tamnija siva */
+  color: #6c757d;
   opacity: 0.75;
   font-style: italic;
   transition: opacity var(--transition-speed) ease,
@@ -361,14 +360,13 @@ body[data-theme="light"] {
 }
 
 body[data-theme="dark"] .node-description.empty::before {
-  /* Za tamnu temu, koristićemo svetliju sivu boju */
-  color: #adb5bd; /* Svetlija siva */
+  color: #adb5bd;
   opacity: 0.85;
 }
 
 .node-description:focus {
-  background-color: rgba(0, 123, 255, 0.15); /* Slightly more visible focus */
-  box-shadow: 0 0 0 2px var(--primary-main); /* Focus ring */
+  background-color: rgba(0, 123, 255, 0.15);
+  box-shadow: 0 0 0 2px var(--primary-main);
 }
 
 .context-menu {
@@ -378,22 +376,21 @@ body[data-theme="dark"] .node-description.empty::before {
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
   border-radius: var(--border-radius);
-  box-shadow: 0 4px 15px var(--shadow-main-outer); /* Enhanced shadow */
-  padding: 8px 0; /* Adjusted padding */
+  box-shadow: 0 4px 15px var(--shadow-main-outer);
+  padding: 8px 0;
   z-index: 1001;
   display: none;
-  min-width: 180px; /* Wider context menu */
+  min-width: 180px;
   color: var(--text-main);
   transition: background-color var(--transition-speed) ease,
-    box-shadow var(--transition-speed) ease, color var(--transition-speed) ease,
+    box-shadow var (--transition-speed) ease, color var(--transition-speed) ease,
     border-color var(--transition-speed) ease, opacity 0.2s ease,
-    transform 0.2s ease; /* Added transition for show/hide */
-  opacity: 0; /* Start hidden for animation */
-  transform: scale(0.95) translateY(-5px); /* Start slightly smaller and offset */
+    transform 0.2s ease;
+  opacity: 0;
+  transform: scale(0.95) translateY(-5px);
 }
 
 .context-menu.visible {
-  /* Class to be added by JS to show */
   opacity: 1;
   transform: scale(1) translateY(0);
 }
@@ -405,12 +402,12 @@ body[data-theme="dark"] .node-description.empty::before {
 }
 
 .context-menu li {
-  padding: 10px 18px; /* Increased padding */
+  padding: 10px 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 12px; /* Increased gap */
-  font-size: 0.95em; /* Slightly larger font */
+  gap: 12px;
+  font-size: 0.95em;
   transition: background-color var(--animation-speed-fast) ease,
     color var(--animation-speed-fast) ease;
 }
@@ -421,14 +418,14 @@ body[data-theme="dark"] .node-description.empty::before {
 }
 
 .context-menu li i {
-  width: 18px; /* Increased icon width */
+  width: 18px;
   text-align: center;
 }
 
 #notification-area {
   position: fixed;
-  bottom: 25px; /* Increased offset */
-  right: 25px; /* Increased offset */
+  bottom: 25px;
+  right: 25px;
   z-index: 2000;
   display: flex;
   flex-direction: column;
@@ -436,22 +433,20 @@ body[data-theme="dark"] .node-description.empty::before {
 }
 
 .notification {
-  background-color: var(
-    --surface-main
-  ); /* Use surface for better contrast with text */
+  background-color: var(--surface-main);
   color: var(--text-main);
-  padding: 12px 22px; /* Increased padding */
+  padding: 12px 22px;
   border-radius: var(--border-radius);
-  box-shadow: 0 3px 8px var(--shadow-main-outer); /* Enhanced shadow */
+  box-shadow: 0 3px 8px var(--shadow-main-outer);
   opacity: 0;
   transform: translateY(20px);
-  animation: slideInFadeOut 4.5s forwards; /* Slightly longer duration */
-  font-size: 0.95em; /* Slightly larger font */
-  border-left: 4px solid var(--primary-main); /* Accent border */
+  animation: slideInFadeOut 4.5s forwards;
+  font-size: 0.95em;
+  border-left: 4px solid var(--primary-main);
 }
 
 .notification.error {
-  border-left-color: #e74c3c; /* Red for error */
+  border-left-color: #e74c3c;
   background-color: #fdeded;
   color: #a94442;
 }
@@ -484,41 +479,37 @@ body[data-theme="dark"] .notification.error {
   .navbar {
     flex-direction: column;
     align-items: flex-start;
-    padding: 10px 15px; /* Smanjen padding za uži navbar */
-    position: relative; /* Omogućava da sadržaj ne ide ispod fiksiranog navbara ako postane previsok */
+    padding: 10px 15px;
+    position: relative;
   }
   .navbar .logo {
-    margin-bottom: 10px; /* Dodat razmak ispod logotipa */
+    margin-bottom: 10px;
   }
   .navbar .tools {
-    margin-top: 0; /* Uklonjen gornji margin, logo će dati razmak */
+    margin-top: 0;
     display: flex;
-    flex-wrap: wrap; /* Omogućava prelamanje dugmića */
-    gap: 8px; /* Smanjen razmak između dugmića */
-    width: 100%; /* Alati zauzimaju punu širinu */
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
   }
   .navbar .tools button,
   .navbar .tools .tool-button {
     margin-left: 0;
     padding: 8px 12px;
-    font-size: 0.9em; /* Malo veći font za bolju čitljivost */
-    flex-grow: 1; /* Omogućava dugmićima da se šire i popune red */
-    min-width: 120px; /* Minimalna širina da tekst ne bude previše stisnut */
+    font-size: 0.9em;
+    flex-grow: 1;
+    min-width: 120px;
   }
 
-  /* Prilagođavanje visine radnog prostora na osnovu dinamičke visine navbara */
-  /* Ovo će zahtevati JS da izračuna visinu navbara i postavi --navbar-height CSS varijablu */
   #workspace {
-    top: calc(
-      var(--navbar-height, 120px) + 5px
-    ); /* Koristi CSS varijablu, sa fallback vrednošću */
+    top: calc(var(--navbar-height, 120px) + 5px);
     height: calc(100vh - (var(--navbar-height, 120px) + 5px));
   }
 
   .node {
     min-width: 120px;
     padding: 12px;
-    min-height: 40px; /* Smanjena minimalna visina */
+    min-height: 40px;
   }
   .node-title {
     font-size: 1em;
@@ -527,17 +518,17 @@ body[data-theme="dark"] .notification.error {
     font-size: 0.85em;
   }
   .context-menu {
-    min-width: 160px; /* Smanjena minimalna širina */
-    font-size: 0.9em; /* Smanjen font za kompaktniji meni */
+    min-width: 160px;
+    font-size: 0.9em;
   }
   .context-menu li {
-    padding: 8px 15px; /* Smanjen padding */
-    gap: 8px; /* Smanjen razmak */
+    padding: 8px 15px;
+    gap: 8px;
   }
   #notification-area {
     bottom: 15px;
     right: 15px;
-    width: calc(100% - 30px); /* Notifikacije zauzimaju skoro celu širinu */
+    width: calc(100% - 30px);
   }
   .notification {
     padding: 10px 15px;
@@ -545,18 +536,17 @@ body[data-theme="dark"] .notification.error {
   }
 }
 
-/* Dodatni media query za veoma male ekrane */
 @media (max-width: 480px) {
   .navbar .tools button,
   .navbar .tools .tool-button {
-    font-size: 0.85em; /* Još manji font za dugmiće */
+    font-size: 0.85em;
     padding: 6px 10px;
-    gap: 5px; /* Manji razmak unutar dugmeta */
-    min-width: auto; /* Uklanja minimalnu širinu da bi se bolje smestili */
+    gap: 5px;
+    min-width: auto;
   }
   .navbar .tools button i,
   .navbar .tools .tool-button i {
-    margin-right: 3px; /* Manji razmak za ikonicu */
+    margin-right: 3px;
   }
   .node {
     padding: 10px;
@@ -568,4 +558,44 @@ body[data-theme="dark"] .notification.error {
   .node-description {
     font-size: 0.8em;
   }
+}
+
+body[data-theme="light"] .tippy-box[data-theme~="light"] {
+  background-color: var(--surface-light, #ffffff) !important;
+  color: var(--text-light, #333333) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+body[data-theme="light"] .tippy-box[data-theme~="light"] .tippy-content {
+  color: var(--text-light, #333333) !important;
+  opacity: 1 !important;
+  padding: 8px 12px !important;
+  min-height: 1em !important;
+}
+
+body[data-theme="light"] .tippy-box[data-theme~="light"] .tippy-arrow {
+  color: var(--surface-light, #ffffff) !important;
+}
+
+body[data-theme="dark"] .tippy-box[data-theme~="dark"] {
+  background-color: var(--surface-dark, #34495e) !important;
+  color: var(--text-dark, #ecf0f1) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
+}
+
+body[data-theme="dark"] .tippy-box[data-theme~="dark"] .tippy-content {
+  color: var(--text-dark, #ecf0f1) !important;
+  opacity: 1 !important;
+  padding: 8px 12px !important;
+  min-height: 1em !important;
+}
+
+body[data-theme="dark"] .tippy-box[data-theme~="dark"] .tippy-arrow {
+  color: var(--surface-dark, #34495e) !important;
+}
+
+.tippy-box {
+  border-radius: var(--border-radius, 8px) !important;
+  font-family: var(--font-family, "Poppins", sans-serif) !important;
+  font-size: 0.9em !important;
 }
