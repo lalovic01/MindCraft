@@ -73,7 +73,7 @@ function showNotification(message, type = "info") {
 function showContextMenu(x, y, targetNode) {
   if (!targetNode) {
     console.warn("Kontekstualni meni otvoren bez ciljnog čvora.");
-    return; // Ako nema ciljnog čvora, ne otvaramo meni
+    return;
   }
 
   console.log("Otvaranje kontekstualnog menija za čvor:", targetNode);
@@ -105,7 +105,7 @@ function hideContextMenu(resetTarget = true) {
     setTimeout(() => {
       contextMenu.style.display = "none";
       if (resetTarget) {
-        contextTargetNode = null; // Resetujemo samo ako je resetTarget true
+        contextTargetNode = null;
       }
     }, 200);
     contextMenuVisible = false;
@@ -139,50 +139,94 @@ function initUI() {
 
     const action = actionItem.dataset.action;
 
-    // Sakrivamo meni, ali ne resetujemo odmah contextTargetNode
-    hideContextMenu(false);
-
-    if (!contextTargetNode) {
-      console.error("Nema odabranog čvora za akciju.");
+    if (!contextTargetNode && action !== "color") {
+      console.error(
+        "Akcija kontekstualnog menija pokrenuta, ali contextTargetNode je null."
+      );
+      hideContextMenu(true);
       return;
     }
 
-    console.log(`Izvršavanje akcije "${action}" za čvor:`, contextTargetNode);
+    if (action !== "color" && !contextTargetNode) {
+      console.error(
+        `Akcija "${action}" zahteva contextTargetNode, ali je null.`
+      );
+      hideContextMenu(true);
+      return;
+    }
+
+    if (action !== "color") {
+      console.log(
+        `Akcija kontekstualnog menija "${action}" izabrana za čvor:`,
+        contextTargetNode.id
+      );
+    }
 
     switch (action) {
       case "edit":
-        // Fokusira naslov čvora za uređivanje
         contextTargetNode.focusTitle();
+        hideContextMenu(true);
         break;
       case "connect":
-        // Pokreće režim povezivanja iz odabranog čvora
         app.startConnection(contextTargetNode);
+        hideContextMenu(true);
         break;
       case "color":
-        // Otvara color picker za promenu boje čvora
+        if (!contextTargetNode) {
+          console.error(
+            "Akcija 'Promeni boju' pokrenuta, ali contextTargetNode je null."
+          );
+          hideContextMenu(true);
+          return;
+        }
+        console.log("Akcija Promeni boju za čvor:", contextTargetNode.id);
+
         contextColorPicker.oninput = (e) => {
-          contextTargetNode.setColor(e.target.value);
-          app.saveState();
+          if (contextTargetNode) {
+            contextTargetNode.setColor(e.target.value);
+            app.saveState();
+          } else {
+            console.error(
+              "contextTargetNode je null unutar color picker oninput"
+            );
+          }
         };
+
+        contextColorPicker.onchange = (e) => {
+          if (contextTargetNode) {
+            console.log(
+              "Color picker change (committed) za čvor:",
+              contextTargetNode.id,
+              "Nova boja:",
+              e.target.value
+            );
+            contextTargetNode.setColor(e.target.value);
+            app.saveState();
+          } else {
+            console.error(
+              "contextTargetNode je null unutar color picker onchange"
+            );
+          }
+          hideContextMenu(true);
+        };
+
         contextColorPicker.click();
         break;
       case "delete":
-        // Briše odabrani čvor
         app.deleteNode(contextTargetNode);
+        hideContextMenu(true);
         break;
       case "history":
-        // Prikazuje placeholder za istoriju izmena
         showNotification(
           `Istorija izmena za "${contextTargetNode.title}" nije implementirana.`,
           "info"
         );
+        hideContextMenu(true);
         break;
       default:
         console.warn(`Nepoznata akcija: ${action}`);
+        hideContextMenu(true);
     }
-
-    // Resetujemo contextTargetNode nakon što se akcija završi
-    contextTargetNode = null;
   });
 
   updateNavbarHeight();
