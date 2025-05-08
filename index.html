@@ -67,7 +67,22 @@
         </li>
         <li data-action="delete"><i class="fas fa-trash"></i> Obriši</li>
         <li data-action="history"><i class="fas fa-history"></i> Istorija</li>
+        <li data-action="icon"><i class="fas fa-icons"></i> Izaberi ikonu</li>
       </ul>
+    </div>
+
+    <div id="icon-picker-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Izaberi Ikonu</h2>
+          <button id="close-icon-picker-modal-btn" class="modal-close-btn">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <div id="icon-list-container" class="icon-grid"></div>
+        </div>
+      </div>
     </div>
 
     <div id="history-modal" class="modal-overlay" style="display: none">
