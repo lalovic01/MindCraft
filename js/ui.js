@@ -11,6 +11,71 @@ const closeHistoryModalButton = document.getElementById(
   "close-history-modal-btn"
 );
 const historyList = document.getElementById("history-list");
+const iconPickerModal = document.getElementById("icon-picker-modal");
+const closeIconPickerModalButton = document.getElementById(
+  "close-icon-picker-modal-btn"
+);
+const iconListContainer = document.getElementById("icon-list-container");
+
+const PREDEFINED_ICONS = [
+  "fa-lightbulb",
+  "fa-comment",
+  "fa-star",
+  "fa-heart",
+  "fa-check",
+  "fa-times",
+  "fa-flag",
+  "fa-tag",
+  "fa-book",
+  "fa-user",
+  "fa-cog",
+  "fa-folder",
+  "fa-paperclip",
+  "fa-map-marker-alt",
+  "fa-exclamation-triangle",
+  "fa-question-circle",
+  "fa-info-circle",
+  "fa-link",
+  "fa-image",
+  "fa-video",
+  "fa-music",
+  "fa-calendar-alt",
+  "fa-clock",
+  "fa-brain",
+  "fa-atom",
+  "fa-rocket",
+  "fa-tree",
+  "fa-cloud",
+  "fa-bolt",
+  "💡",
+  "⭐",
+  "❤️",
+  "✅",
+  "❌",
+  "🏁",
+  "🏷️",
+  "📚",
+  "👤",
+  "⚙️",
+  "📁",
+  "📎",
+  "📍",
+  "⚠️",
+  "❓",
+  "ℹ️",
+  "🔗",
+  "🖼️",
+  "🎞️",
+  "🎵",
+  "📅",
+  "⏰",
+  "🧠",
+  "⚛️",
+  "🚀",
+  "🌳",
+  "☁️",
+  "⚡",
+];
 
 let currentTheme = "light";
 let contextMenuVisible = false;
@@ -144,9 +209,23 @@ function showHistoryModal(node) {
       minute: "2-digit",
     });
 
+    let iconDisplayHTML = "";
+    if (entry.icon && entry.icon.trim() !== "") {
+      iconDisplayHTML = `<span class="history-icon-display">${
+        entry.icon.startsWith("fa-")
+          ? `<i class="fas ${entry.icon}"></i>`
+          : entry.icon
+      }</span>`;
+    } else {
+      iconDisplayHTML = `<span class="history-icon-display">&nbsp;</span>`;
+    }
+
     listItem.innerHTML = `
       <span class="history-timestamp">${timestamp}</span>
-      <div class="history-title">${entry.title || "Nema naslova"}</div>
+      <div class="history-entry-header">
+        ${iconDisplayHTML}
+        <span class="history-title">${entry.title || "Nema naslova"}</span>
+      </div>
       <div class="history-description">${
         entry.description || "Nema opisa"
       }</div>
@@ -162,6 +241,101 @@ function showHistoryModal(node) {
 
 function hideHistoryModal() {
   historyModal.classList.remove("visible");
+}
+
+function showIconPickerModal(node) {
+  if (!node) {
+    showNotification("Greška: Nije izabran čvor za promenu ikone.", "error");
+    return;
+  }
+
+  iconListContainer.innerHTML = "";
+
+  PREDEFINED_ICONS.forEach((iconCode) => {
+    const iconItem = document.createElement("div");
+    iconItem.classList.add("icon-grid-item");
+    iconItem.dataset.icon = iconCode;
+    iconItem.innerHTML = iconCode.startsWith("fa-")
+      ? `<i class="fas ${iconCode}"></i>`
+      : iconCode;
+
+    iconItem.addEventListener("click", () => {
+      console.log(
+        `Icon clicked in picker. Icon code: "${iconCode}". Attempting to set icon for node:`,
+        node
+      );
+      if (node) {
+        if (typeof node.setIcon === "function") {
+          if (node.icon !== iconCode) {
+            console.log(`Calling node.setIcon("${iconCode}")`);
+            node.setIcon(iconCode);
+          } else {
+            console.log("Icon is the same, not calling setIcon.");
+          }
+        } else {
+          console.error("CRITICAL: node.setIcon is NOT a function!", node);
+          showNotification(
+            "Greška: Ne može se postaviti ikona. Metoda nije pronađena.",
+            "error"
+          );
+        }
+      } else {
+        console.error(
+          "CRITICAL: 'node' is null or undefined when trying to set icon from picker!"
+        );
+        showNotification("Greška: Ciljni čvor nije definisan.", "error");
+      }
+      hideIconPickerModal();
+    });
+    iconListContainer.appendChild(iconItem);
+  });
+
+  const removeIconItem = document.createElement("div");
+  removeIconItem.classList.add("icon-grid-item");
+  removeIconItem.dataset.icon = "";
+  removeIconItem.innerHTML = `<i class="fas fa-ban"></i>`;
+  removeIconItem.title = "Ukloni ikonu";
+  removeIconItem.addEventListener("click", () => {
+    console.log(
+      "Remove icon clicked. Attempting to remove icon for node:",
+      node
+    );
+    if (node) {
+      if (typeof node.setIcon === "function") {
+        if (node.icon !== null && node.icon !== "") {
+          console.log("Calling node.setIcon(null) to remove icon.");
+          node.setIcon(null);
+        } else {
+          console.log("Node already has no icon, not calling setIcon.");
+        }
+      } else {
+        console.error(
+          "CRITICAL: node.setIcon is NOT a function when trying to remove icon!",
+          node
+        );
+        showNotification(
+          "Greška: Ne može se ukloniti ikona. Metoda nije pronađena.",
+          "error"
+        );
+      }
+    } else {
+      console.error(
+        "CRITICAL: 'node' is null or undefined when trying to remove icon!"
+      );
+      showNotification("Greška: Ciljni čvor nije definisan.", "error");
+    }
+    hideIconPickerModal();
+  });
+  iconListContainer.appendChild(removeIconItem);
+
+  iconPickerModal.style.display = "flex";
+  requestAnimationFrame(() => {
+    iconPickerModal.classList.add("visible");
+  });
+}
+
+function hideIconPickerModal() {
+  iconPickerModal.classList.remove("visible");
 }
 
 function initUI() {
@@ -280,6 +454,18 @@ function initUI() {
         }
         hideContextMenu(true);
         break;
+      case "icon":
+        if (contextTargetNode) {
+          showIconPickerModal(contextTargetNode);
+        } else {
+          console.error("Pokušaj izbora ikone bez selektovanog čvora.");
+          showNotification(
+            "Greška: Nije izabran čvor za promenu ikone.",
+            "error"
+          );
+        }
+        hideContextMenu(true);
+        break;
       default:
         console.warn(`Nepoznata akcija: ${action}`);
         hideContextMenu(true);
@@ -293,6 +479,17 @@ function initUI() {
     historyModal.addEventListener("click", (event) => {
       if (event.target === historyModal) {
         hideHistoryModal();
+      }
+    });
+  }
+
+  if (closeIconPickerModalButton) {
+    closeIconPickerModalButton.addEventListener("click", hideIconPickerModal);
+  }
+  if (iconPickerModal) {
+    iconPickerModal.addEventListener("click", (event) => {
+      if (event.target === iconPickerModal) {
+        hideIconPickerModal();
       }
     });
   }
