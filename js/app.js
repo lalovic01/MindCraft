@@ -19,10 +19,9 @@ const app = (function () {
 
   let isConnecting = false;
   let connectionStartNode = null;
-  let lastDragEndTime = 0; // Timestamp of the last drag end
+  let lastDragEndTime = 0;
 
   function wasDragging() {
-    // Consider a drag operation if it ended very recently (e.g., within 100ms)
     return Date.now() - lastDragEndTime < 100;
   }
 
@@ -35,7 +34,8 @@ const app = (function () {
     initUI();
     loadState();
     setupEventListeners();
-    redrawAllConnectors();
+    applyViewTransform();
+    requestAnimationFrame(redrawAllConnectors);
     console.log("App Initialized.");
   }
 
@@ -46,28 +46,23 @@ const app = (function () {
     importJsonInput.addEventListener("change", importMapJson);
     exportPngButton.addEventListener("click", exportMapPng);
 
-    // Mouse pan events
     workspace.addEventListener("mousedown", handlePanStart);
-    // Touch pan events
     workspace.addEventListener("touchstart", handlePanStart, {
       passive: false,
     });
 
-    // Mouse move for drag/pan
     window.addEventListener("mousemove", handleGenericMove);
-    // Touch move for drag/pan
     window.addEventListener("touchmove", handleGenericMove, { passive: false });
 
-    // Mouse up for ending drag/pan
     window.addEventListener("mouseup", handleGenericEnd);
-    // Touch up for ending drag/pan
     window.addEventListener("touchend", handleGenericEnd);
     window.addEventListener("touchcancel", handleGenericEnd);
 
     workspace.addEventListener("wheel", zoom, { passive: false });
+    window.addEventListener("resize", handleWindowResize);
 
     workspace.addEventListener("click", (e) => {
-      if (wasDragging()) return; // If a drag just ended, don't deselect/cancel connection
+      if (wasDragging()) return;
       if (
         e.target === workspace ||
         e.target === nodeLayer ||
@@ -85,19 +80,19 @@ const app = (function () {
       const targetNodeElement = event.target.closest(".node");
       if (!targetNodeElement) {
         console.warn("Desni klik nije detektovao čvor.");
-        return; // Ako nema čvora, ne otvaramo meni
+        return;
       }
 
       const nodeId = targetNodeElement.dataset.id;
       if (!nodeId) {
         console.error("Čvor nema dataset.id:", targetNodeElement);
-        return; // Ako dataset.id nije postavljen, ne otvaramo meni
+        return;
       }
 
       const targetNodeInstance = app.findNodeById(nodeId);
       if (!targetNodeInstance) {
         console.error("Čvor nije pronađen u aplikaciji za ID:", nodeId);
-        return; // Ako čvor nije pronađen, ne otvaramo meni
+        return;
       }
 
       console.log("Pronađen čvor za kontekstualni meni:", targetNodeInstance);
@@ -150,7 +145,6 @@ const app = (function () {
 
   function selectNode(nodeToSelect) {
     if (wasDragging() && selectedNode === nodeToSelect) {
-      // If it was a drag of the currently selected node, don't re-process selection
       return;
     }
 
@@ -184,12 +178,11 @@ const app = (function () {
 
   function initiateDrag(node, event) {
     if (isPanning) return;
-    // For touch events, event.button is undefined.
     if (event.type === "mousedown" && event.button !== 0) return;
 
     console.log("Initiating drag for node:", node.id);
     isDraggingNode = true;
-    selectNode(node); // Select the node being dragged
+    selectNode(node);
     node.getElement().classList.add("dragging");
     workspace.style.cursor = "grabbing";
 
@@ -209,13 +202,12 @@ const app = (function () {
 
     console.log("Drag Offset X:", dragOffsetX, "Y:", dragOffsetY);
     if (event.type.startsWith("touch")) {
-      event.preventDefault(); // Prevent scrolling while dragging a node
+      event.preventDefault();
     }
   }
 
   function dragNode(event) {
     if (!isDraggingNode || !selectedNode) return;
-    // No preventDefault here, as it's called in handleGenericMove for touchmove
 
     const workspaceRect = workspace.getBoundingClientRect();
     const clientX = event.type.startsWith("touch")
@@ -246,18 +238,16 @@ const app = (function () {
   function endDragNode() {
     if (!isDraggingNode || !selectedNode) return;
     console.log("Ending drag for node:", selectedNode.id);
-    lastDragEndTime = Date.now(); // Record drag end time
+    lastDragEndTime = Date.now();
     const draggedNodeElement = selectedNode.getElement();
     draggedNodeElement.classList.remove("dragging");
 
-    // Add class to trigger bounce animation
     draggedNodeElement.classList.add("dropped");
-    // Remove the class after the animation completes
     setTimeout(() => {
       if (draggedNodeElement) {
         draggedNodeElement.classList.remove("dropped");
       }
-    }, 500); // Duration of the dragBounceDrop animation
+    }, 500);
 
     draggedNodeElement.classList.add("dragging-ended-recently");
     setTimeout(() => {
@@ -269,7 +259,6 @@ const app = (function () {
     isDraggingNode = false;
 
     if (!isPanning) {
-      // Check isPanning, not event type, as pan might also end
       workspace.style.cursor = "grab";
     }
     saveState();
@@ -277,10 +266,10 @@ const app = (function () {
 
   function handleGenericMove(event) {
     if (isDraggingNode) {
-      if (event.type === "touchmove") event.preventDefault(); // Prevent scroll during drag
+      if (event.type === "touchmove") event.preventDefault();
       dragNode(event);
     } else if (isPanning) {
-      if (event.type === "touchmove") event.preventDefault(); // Prevent scroll during pan
+      if (event.type === "touchmove") event.preventDefault();
       pan(event);
     }
   }
@@ -302,7 +291,7 @@ const app = (function () {
     } else {
       showNotification(
         "Prvo selektujte čvor iz kojeg želite da povučete vezu.",
-        "warning" // Added type
+        "warning"
       );
     }
   }
@@ -341,7 +330,7 @@ const app = (function () {
         (conn.fromNodeId === toNode.id && conn.toNodeId === fromNode.id)
     );
     if (existing) {
-      showNotification("Ova dva čvora su već povezana.", "warning"); // Added type
+      showNotification("Ova dva čvora su već povezana.", "warning");
       return;
     }
 
@@ -362,7 +351,7 @@ const app = (function () {
     updateConnectorPosition(newConnector);
     showNotification(
       `Povezani čvorovi: "${fromNode.title}" i "${toNode.title}".`,
-      "success" // Added type
+      "success"
     );
     saveState();
   }
@@ -380,27 +369,72 @@ const app = (function () {
   function updateConnectorPosition(connector) {
     const fromNode = findNodeById(connector.fromNodeId);
     const toNode = findNodeById(connector.toNodeId);
-    if (!fromNode || !toNode || !connector.element) return;
+    if (!fromNode || !toNode || !connector.element) {
+      console.warn(
+        "updateConnectorPosition: Missing node or element for connector",
+        connector.id
+      );
+      return;
+    }
 
     const line = connector.element;
-    const fromRect = fromNode.getElement().getBoundingClientRect();
-    const toRect = toNode.getElement().getBoundingClientRect();
+    const fromNodeEl = fromNode.getElement();
+    const toNodeEl = toNode.getElement();
+
+    if (!fromNodeEl || !toNodeEl) {
+      console.warn(
+        "updateConnectorPosition: Node element not found for connector",
+        connector.id
+      );
+      return;
+    }
+
+    const svgX1 = fromNode.x + fromNodeEl.offsetWidth / 2;
+    const svgY1 = fromNode.y + fromNodeEl.offsetHeight / 2;
+    const svgX2 = toNode.x + toNodeEl.offsetWidth / 2;
+    const svgY2 = toNode.y + toNodeEl.offsetHeight / 2;
+
+    const fromRect = fromNodeEl.getBoundingClientRect();
     const workspaceRect = workspace.getBoundingClientRect();
-
-    const fromCenterX = fromRect.left + fromRect.width / 2;
-    const fromCenterY = fromRect.top + fromRect.height / 2;
-    const toCenterX = toRect.left + toRect.width / 2;
-    const toCenterY = toRect.top + toRect.height / 2;
-
-    const svgX1 =
-      (fromCenterX - workspaceRect.left - viewTransform.x) /
+    const old_svgX1 =
+      (fromRect.left +
+        fromRect.width / 2 -
+        workspaceRect.left -
+        viewTransform.x) /
       viewTransform.scale;
-    const svgY1 =
-      (fromCenterY - workspaceRect.top - viewTransform.y) / viewTransform.scale;
-    const svgX2 =
-      (toCenterX - workspaceRect.left - viewTransform.x) / viewTransform.scale;
-    const svgY2 =
-      (toCenterY - workspaceRect.top - viewTransform.y) / viewTransform.scale;
+    const old_svgY1 =
+      (fromRect.top +
+        fromRect.height / 2 -
+        workspaceRect.top -
+        viewTransform.y) /
+      viewTransform.scale;
+    console.log(
+      `Connector: ${connector.id} (Screen Width: ${window.innerWidth}px)`
+    );
+    console.log(
+      `  From Node (${fromNode.id}): node.x=${fromNode.x.toFixed(
+        2
+      )}, node.y=${fromNode.y.toFixed(2)}, offsetWidth=${
+        fromNodeEl.offsetWidth
+      }, offsetHeight=${fromNodeEl.offsetHeight}`
+    );
+    console.log(
+      `  To Node (${toNode.id}): node.x=${toNode.x.toFixed(
+        2
+      )}, node.y=${toNode.y.toFixed(2)}, offsetWidth=${
+        toNodeEl.offsetWidth
+      }, offsetHeight=${toNodeEl.offsetHeight}`
+    );
+    console.log(
+      `  NEW SVG Coords: x1=${svgX1.toFixed(2)}, y1=${svgY1.toFixed(
+        2
+      )}, x2=${svgX2.toFixed(2)}, y2=${svgY2.toFixed(2)}`
+    );
+    console.log(
+      `  OLD SVG Coords (for comparison): x1=${old_svgX1.toFixed(
+        2
+      )}, y1=${old_svgY1.toFixed(2)}`
+    );
 
     line.setAttribute("x1", svgX1);
     line.setAttribute("y1", svgY1);
@@ -439,8 +473,6 @@ const app = (function () {
 
   function handlePanStart(event) {
     const isNodeTarget = event.target.closest(".node");
-    // For touch events, event.button is undefined.
-    // For mousedown, check event.button.
     const isPrimaryAction =
       event.type === "touchstart" ||
       (event.type === "mousedown" && event.button === 0);
@@ -460,12 +492,12 @@ const app = (function () {
         document.activeElement &&
         document.activeElement.closest('[contenteditable="true"]')
       ) {
-        return; // Don't pan if starting on editable content
+        return;
       }
     }
 
     if (event.type.startsWith("touch")) {
-      event.preventDefault(); // Prevent default touch actions like scrolling or zooming
+      event.preventDefault();
     }
 
     isPanning = true;
@@ -484,7 +516,6 @@ const app = (function () {
 
   function pan(event) {
     if (!isPanning) return;
-    // No preventDefault here, as it's called in handleGenericMove for touchmove
 
     const clientX = event.type.startsWith("touch")
       ? event.touches[0].clientX
@@ -506,7 +537,6 @@ const app = (function () {
   }
 
   function zoom(event) {
-    // Prevent zoom if a pan just ended (middle mouse release might trigger wheel)
     if (
       isPanning ||
       (event.buttons & 4) === 4 ||
@@ -546,6 +576,19 @@ const app = (function () {
     viewTransform.y = centerY - worldCenterY_before * newScale;
 
     applyViewTransform();
+    requestAnimationFrame(redrawAllConnectors);
+  }
+
+  function handleWindowResize() {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        console.log(
+          "Window resized, redrawing connectors via double requestAnimationFrame."
+        );
+        applyViewTransform();
+        redrawAllConnectors();
+      });
+    });
   }
 
   function saveState() {
@@ -610,10 +653,9 @@ const app = (function () {
       }
 
       console.log("Application state loaded.");
-      showNotification("Prethodna mapa uspešno učitana.", "success"); // Added type
+      showNotification("Prethodna mapa uspešno učitana.", "success");
     } else {
-      // Optional: Show a notification if no data was loaded
-      // showNotification("Započnite kreiranjem nove ideje!", "info");
+      showNotification("Započnite kreiranjem nove ideje!", "info");
     }
   }
 
@@ -651,7 +693,7 @@ const app = (function () {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showNotification("Mapa eksportovana u JSON fajl.", "success"); // Added type
+    showNotification("Mapa eksportovana u JSON fajl.", "success");
   }
 
   function importMapJson(event) {
@@ -705,7 +747,7 @@ const app = (function () {
           connectors = loadedConnectors;
           redrawAllConnectors();
 
-          showNotification("Mapa uspešno uvezena iz JSON fajla.", "success"); // Added type
+          showNotification("Mapa uspešno uvezena iz JSON fajla.", "success");
           saveState();
         } else {
           throw new Error("Nevažeći format JSON fajla.");
@@ -721,7 +763,7 @@ const app = (function () {
   }
 
   function exportMapPng() {
-    showNotification("Priprema PNG eksport..."); // Default info type
+    showNotification("Priprema PNG eksport...");
 
     if (typeof domtoimage === "undefined") {
       console.error("dom-to-image-more library is not loaded!");
@@ -747,7 +789,7 @@ const app = (function () {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        showNotification("Mapa eksportovana kao PNG slika.", "success"); // Added type
+        showNotification("Mapa eksportovana kao PNG slika.", "success");
       })
       .catch(function (error) {
         console.error("Greška tokom dom-to-image eksporta:", error);
@@ -769,7 +811,7 @@ const app = (function () {
     startConnection: startConnection,
     initiateDrag: initiateDrag,
     isConnectingMode: isConnectingMode,
-    wasDragging: wasDragging, // Expose wasDragging
+    wasDragging: wasDragging,
   };
 })();
 
