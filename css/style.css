@@ -183,6 +183,7 @@ body[data-theme="light"] {
   pointer-events: none;
   z-index: 1;
   transform-origin: 0 0;
+  overflow: visible !important;
 }
 
 .connector-line {
