@@ -21,6 +21,10 @@ const app = (function () {
   let connectionStartNode = null;
   let lastDragEndTime = 0;
 
+  function getSelectedNode() {
+    return selectedNode;
+  }
+
   function wasDragging() {
     return Date.now() - lastDragEndTime < 100;
   }
@@ -108,12 +112,13 @@ const app = (function () {
       y = (rect.height / 2 - viewTransform.y) / viewTransform.scale;
     }
 
-    const newNode = new Node(null, x, y);
+    // Prosleđujemo null za ikonu inicijalno, Node konstruktor će se pobrinuti za to
+    const newNode = new Node(null, x, y, "Nova ideja", "", "#ffffff", null);
     nodes.push(newNode);
     nodeLayer.appendChild(newNode.getElement());
 
     showNotification(`Ideja "${newNode.title}" dodata.`);
-    saveState();
+    saveState(); // Pozivamo saveState odmah nakon dodavanja čvora
     return newNode;
   }
 
@@ -143,12 +148,13 @@ const app = (function () {
     return nodes.find((node) => node.id === id);
   }
 
-  function selectNode(nodeToSelect) {
-    if (wasDragging() && selectedNode === nodeToSelect) {
+  function selectNode(nodeToSelect, internalCall = false) {
+    if (!internalCall && wasDragging() && selectedNode === nodeToSelect) {
       return;
     }
 
     if (
+      !internalCall &&
       isConnecting &&
       connectionStartNode &&
       nodeToSelect !== connectionStartNode
@@ -806,6 +812,7 @@ const app = (function () {
     deleteNode: deleteNode,
     findNodeById: findNodeById,
     selectNode: selectNode,
+    getSelectedNode: getSelectedNode, // Dodajemo novu metodu
     updateConnectorsForNode: updateConnectorsForNode,
     saveState: saveState,
     startConnection: startConnection,
