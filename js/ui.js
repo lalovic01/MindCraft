@@ -6,6 +6,11 @@ const nodeLayer = document.getElementById("node-layer");
 const connectorLayer = document.getElementById("connector-layer");
 const contextColorPicker = document.getElementById("context-color-picker");
 const navbar = document.querySelector(".navbar");
+const historyModal = document.getElementById("history-modal");
+const closeHistoryModalButton = document.getElementById(
+  "close-history-modal-btn"
+);
+const historyList = document.getElementById("history-list");
 
 let currentTheme = "light";
 let contextMenuVisible = false;
@@ -76,6 +81,14 @@ function showContextMenu(x, y, targetNode) {
     return;
   }
 
+  const historyOption = contextMenu.querySelector('li[data-action="history"]');
+  if (historyOption) {
+    historyOption.style.display =
+      targetNode && targetNode.history && targetNode.history.length > 0
+        ? "flex"
+        : "none";
+  }
+
   console.log("Otvaranje kontekstualnog menija za čvor:", targetNode);
 
   contextTargetNode = targetNode;
@@ -110,6 +123,45 @@ function hideContextMenu(resetTarget = true) {
     }, 200);
     contextMenuVisible = false;
   }
+}
+
+function showHistoryModal(node) {
+  if (!node || !node.history || node.history.length === 0) {
+    showNotification("Nema istorije izmena za ovaj čvor.", "info");
+    return;
+  }
+
+  historyList.innerHTML = "";
+
+  [...node.history].reverse().forEach((entry) => {
+    const listItem = document.createElement("li");
+
+    const timestamp = new Date(entry.timestamp).toLocaleString("sr-RS", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    listItem.innerHTML = `
+      <span class="history-timestamp">${timestamp}</span>
+      <div class="history-title">${entry.title || "Nema naslova"}</div>
+      <div class="history-description">${
+        entry.description || "Nema opisa"
+      }</div>
+    `;
+    historyList.appendChild(listItem);
+  });
+
+  historyModal.style.display = "flex";
+  requestAnimationFrame(() => {
+    historyModal.classList.add("visible");
+  });
+}
+
+function hideHistoryModal() {
+  historyModal.classList.remove("visible");
 }
 
 function initUI() {
@@ -217,10 +269,15 @@ function initUI() {
         hideContextMenu(true);
         break;
       case "history":
-        showNotification(
-          `Istorija izmena za "${contextTargetNode.title}" nije implementirana.`,
-          "info"
-        );
+        if (contextTargetNode) {
+          showHistoryModal(contextTargetNode);
+        } else {
+          console.error("Pokušaj prikaza istorije bez selektovanog čvora.");
+          showNotification(
+            "Greška: Nije izabran čvor za prikaz istorije.",
+            "error"
+          );
+        }
         hideContextMenu(true);
         break;
       default:
@@ -228,6 +285,17 @@ function initUI() {
         hideContextMenu(true);
     }
   });
+
+  if (closeHistoryModalButton) {
+    closeHistoryModalButton.addEventListener("click", hideHistoryModal);
+  }
+  if (historyModal) {
+    historyModal.addEventListener("click", (event) => {
+      if (event.target === historyModal) {
+        hideHistoryModal();
+      }
+    });
+  }
 
   updateNavbarHeight();
   window.addEventListener("resize", updateNavbarHeight);
