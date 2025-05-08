@@ -17,13 +17,17 @@ class Node {
     this.description = description;
     this.color = color;
     this.icon = icon;
-    this.history = history || [
-      {
-        title: this.title,
-        description: this.description,
-        timestamp: Date.now(),
-      },
-    ];
+    this.history =
+      history && history.length > 0
+        ? history
+        : [
+            {
+              title: this.title,
+              description: this.description,
+              icon: this.icon,
+              timestamp: Date.now(),
+            },
+          ];
 
     this.element = this.createElement();
     this.updatePosition();
@@ -34,62 +38,87 @@ class Node {
   createElement() {
     const nodeElement = document.createElement("div");
     nodeElement.classList.add("node");
-    nodeElement.dataset.id = this.id; // Osiguravamo da je dataset.id postavljen
+    nodeElement.dataset.id = this.id;
     nodeElement.style.backgroundColor = this.color;
 
-    nodeElement.innerHTML = `
-      <div class="node-header">
-        ${
-          this.icon
-            ? `<span class="node-icon">${
-                this.icon.startsWith("fa-")
-                  ? `<i class="fas ${this.icon}"></i>`
-                  : this.icon
-              }</span>`
-            : ""
-        }
-        <div class="node-title" contenteditable="true">${this.title}</div>
-      </div>
-      <div class="node-description" contenteditable="true" placeholder="Dodaj opis...">${
-        this.description
-      }</div>
-    `;
+    const headerDiv = document.createElement("div");
+    headerDiv.classList.add("node-header");
 
-    const descElement = nodeElement.querySelector(".node-description");
+    const titleDiv = document.createElement("div");
+    titleDiv.classList.add("node-title");
+    titleDiv.setAttribute("contenteditable", "true");
+    titleDiv.textContent = this.title;
+
+    const iconSpan = document.createElement("span");
+    iconSpan.classList.add("node-icon");
+    iconSpan.style.display = "none";
+    iconSpan.style.marginRight = "8px";
+
+    this._updateIconElement(iconSpan, this.icon);
+
+    headerDiv.appendChild(iconSpan);
+    headerDiv.appendChild(titleDiv);
+
+    const descriptionDiv = document.createElement("div");
+    descriptionDiv.classList.add("node-description");
+    descriptionDiv.setAttribute("contenteditable", "true");
+    descriptionDiv.setAttribute("placeholder", "Dodaj opis...");
+    descriptionDiv.textContent = this.description;
     if (!this.description) {
-      descElement.classList.add("empty");
+      descriptionDiv.classList.add("empty");
     }
 
+    nodeElement.appendChild(headerDiv);
+    nodeElement.appendChild(descriptionDiv);
+
+    console.log(
+      `Node ${this.id} element created. Initial icon: ${this.icon}, Icon span display: ${iconSpan.style.display}`
+    );
     return nodeElement;
+  }
+
+  _updateIconElement(iconSpanElement, iconCode) {
+    if (!iconSpanElement) return;
+
+    iconSpanElement.innerHTML = "";
+
+    if (iconCode) {
+      if (iconCode.startsWith("fa-")) {
+        const iElement = document.createElement("i");
+        iElement.className = `fas ${iconCode}`;
+        iconSpanElement.appendChild(iElement);
+      } else {
+        iconSpanElement.textContent = iconCode;
+      }
+      iconSpanElement.style.display = "inline-block";
+    } else {
+      iconSpanElement.style.display = "none";
+    }
   }
 
   attachEventListeners() {
     const titleElement = this.element.querySelector(".node-title");
     const descriptionElement = this.element.querySelector(".node-description");
 
-    // Mouse event for dragging
     this.element.addEventListener("mousedown", (event) => {
-      if (event.button !== 0 || app.isConnectingMode()) return; // Only left click
+      if (event.button !== 0 || app.isConnectingMode()) return;
       if (event.target.closest('[contenteditable="true"]')) return;
 
       event.stopPropagation();
       app.initiateDrag(this, event);
     });
 
-    // Touch event for dragging
     this.element.addEventListener(
       "touchstart",
       (event) => {
         if (app.isConnectingMode()) return;
         if (event.target.closest('[contenteditable="true"]')) return;
 
-        // Prevent default touch action like scrolling when starting drag on a node
-        // event.preventDefault(); // Consider if this is needed or if it interferes with text selection/scrolling within node
         event.stopPropagation();
         app.initiateDrag(this, event);
       },
       { passive: false }
-    ); // passive: false allows preventDefault if needed later
+    );
 
     titleElement.addEventListener("blur", () =>
       this.updateContent(titleElement.textContent, this.description)
@@ -120,8 +149,6 @@ class Node {
         this.element.classList.remove("dragging-ended-recently");
         return;
       }
-      // Prevent node selection if it was a drag operation that just ended
-      // This check might be more robust if handled within app.js endDrag
       if (app.wasDragging()) return;
 
       e.stopPropagation();
@@ -136,24 +163,105 @@ class Node {
   }
 
   updateContent(newTitle, newDescription) {
-    const changed =
-      newTitle !== this.title || newDescription !== this.description;
-    if (changed) {
+    const titleChanged = newTitle !== this.title;
+    const descriptionChanged = newDescription !== this.description;
+
+    if (titleChanged || descriptionChanged) {
       this.title = newTitle;
       this.description = newDescription;
+
       this.history.push({
         title: this.title,
         description: this.description,
+        icon: this.icon,
         timestamp: Date.now(),
       });
       if (this.history.length > 10) {
         this.history.shift();
       }
       console.log(
-        `Node ${this.id} content updated. History size: ${this.history.length}`
+        `Node ${this.id} content updated. History size: ${this.history.length}. Current icon in history entry: ${this.icon}`
       );
       app.saveState();
     }
+  }
+
+  setIcon(newIcon) {
+    console.log(
+      `--- Node ${this.id}: setIcon CALLED with newIcon: "${newIcon}" ---`
+    );
+    console.log(
+      `Node ${this.id}: Current this.icon BEFORE any change: "${this.icon}"`
+    );
+
+    const oldIcon = this.icon;
+    const normalizedNewIcon =
+      newIcon === "" || newIcon === undefined ? null : newIcon;
+
+    console.log(
+      `Node ${this.id}: Values for comparison - oldIcon: "${oldIcon}", normalizedNewIcon: "${normalizedNewIcon}"`
+    );
+
+    if (oldIcon === normalizedNewIcon) {
+      console.log(
+        `Node ${this.id}: Icon is the same ("${oldIcon}" === "${normalizedNewIcon}"), no update needed. Exiting setIcon.`
+      );
+      return;
+    }
+
+    console.log(`Node ${this.id}: Icon is different. Proceeding with update.`);
+    this.icon = normalizedNewIcon;
+    console.log(
+      `Node ${this.id}: this.icon property updated to: "${this.icon}"`
+    );
+
+    const oldElement = this.element;
+    const parent = oldElement.parentNode;
+
+    console.log(
+      `Node ${this.id}: Attempting to recreate element. Current this.icon for createElement: "${this.icon}"`
+    );
+    this.element = this.createElement();
+    console.log(
+      `Node ${this.id}: New element created. Attaching listeners and updating properties.`
+    );
+    this.updatePosition();
+    this.updateTextColor();
+    this.attachEventListeners();
+
+    if (parent && oldElement) {
+      parent.replaceChild(this.element, oldElement);
+      console.log(`Node ${this.id}: Element replaced in DOM.`);
+    } else {
+      console.error(
+        `Node ${this.id}: Could not replace element in DOM. Parent: ${parent}, oldElement: ${oldElement}`
+      );
+    }
+
+    if (app.getSelectedNode() && app.getSelectedNode().id === this.id) {
+      console.log(`Node ${this.id}: Re-selecting node.`);
+      app.selectNode(this, true);
+    }
+
+    console.log(
+      `Node ${this.id}: BEFORE history push, this.icon is: "${this.icon}"`
+    );
+
+    this.history.push({
+      title: this.title,
+      description: this.description,
+      icon: this.icon,
+      timestamp: Date.now(),
+    });
+    if (this.history.length > 10) {
+      this.history.shift();
+    }
+
+    console.log(
+      `Node ${this.id}: Icon change pushed to history. History size: ${this.history.length}. Icon in new history entry: ${this.icon}`
+    );
+    app.saveState();
+    console.log(`--- Node ${this.id}: setIcon FINISHED ---`);
   }
 
   setColor(newColor) {
@@ -206,7 +314,7 @@ class Node {
   }
 
   static deserialize(data) {
-    return new Node(
+    const node = new Node(
       data.id,
       data.x,
       data.y,
@@ -216,6 +324,8 @@ class Node {
       data.icon,
       data.history
     );
+    console.log(`Node ${node.id} deserialized with icon: ${node.icon}`);
+    return node;
   }
 
   remove() {
