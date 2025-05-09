@@ -8,6 +8,7 @@ const app = (function () {
   const importJsonInput = document.getElementById("import-json-input");
   const exportPngButton = document.getElementById("export-png-btn");
 
+  const GRID_SIZE = 20;
   let nodes = [];
   let connectors = [];
   let selectedNode = null;
@@ -16,6 +17,7 @@ const app = (function () {
   let dragOffsetX, dragOffsetY;
   let panStartX, panStartY;
   let viewTransform = { x: 0, y: 0, scale: 1 };
+  let snapToGridEnabled = false;
 
   let isConnecting = false;
   let connectionStartNode = null;
@@ -31,6 +33,10 @@ const app = (function () {
 
   function isConnectingMode() {
     return isConnecting;
+  }
+
+  function isSnapToGridEnabled() {
+    return snapToGridEnabled;
   }
 
   function init() {
@@ -112,13 +118,12 @@ const app = (function () {
       y = (rect.height / 2 - viewTransform.y) / viewTransform.scale;
     }
 
-    // Prosleđujemo null za ikonu inicijalno, Node konstruktor će se pobrinuti za to
     const newNode = new Node(null, x, y, "Nova ideja", "", "#ffffff", null);
     nodes.push(newNode);
     nodeLayer.appendChild(newNode.getElement());
 
     showNotification(`Ideja "${newNode.title}" dodata.`);
-    saveState(); // Pozivamo saveState odmah nakon dodavanja čvora
+    saveState();
     return newNode;
   }
 
@@ -233,8 +238,13 @@ const app = (function () {
       (mouseY_relative_to_workspace_viewport - viewTransform.y) /
       viewTransform.scale;
 
-    const newX = mouseX_in_nodelayer - dragOffsetX;
-    const newY = mouseY_in_nodelayer - dragOffsetY;
+    let newX = mouseX_in_nodelayer - dragOffsetX;
+    let newY = mouseY_in_nodelayer - dragOffsetY;
+
+    if (snapToGridEnabled) {
+      newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
+      newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+    }
 
     selectedNode.x = newX;
     selectedNode.y = newY;
@@ -475,6 +485,58 @@ const app = (function () {
   function applyViewTransform() {
     nodeLayer.style.transform = `translate(${viewTransform.x}px, ${viewTransform.y}px) scale(${viewTransform.scale})`;
     connectorLayer.style.transform = `translate(${viewTransform.x}px, ${viewTransform.y}px) scale(${viewTransform.scale})`;
+
+    if (workspace.classList.contains("grid-visible")) {
+      const scaledGridSize = GRID_SIZE * viewTransform.scale;
+
+      if (
+        scaledGridSize >= 1 &&
+        workspace.offsetWidth > 0 &&
+        workspace.offsetHeight > 0 &&
+        scaledGridSize < workspace.offsetWidth * 4 &&
+        scaledGridSize < workspace.offsetHeight * 4
+      ) {
+        workspace.style.backgroundSize = `${scaledGridSize}px ${scaledGridSize}px`;
+        const xPos = viewTransform.x % scaledGridSize;
+        const yPos = viewTransform.y % scaledGridSize;
+        workspace.style.backgroundPosition = `${xPos}px ${yPos}px`;
+        console.log(
+          `[Grid Debug] Grid APPLIED. Size: ${scaledGridSize.toFixed(
+            2
+          )}px, Position: ${xPos.toFixed(2)}px ${yPos.toFixed(2)}px`
+        );
+      } else {
+        workspace.style.backgroundSize = "0 0";
+        workspace.style.backgroundPosition = "0 0";
+        console.log(
+          `[Grid Debug] Grid HIDDEN. Reason: scaledGridSize (${scaledGridSize.toFixed(
+            4
+          )}) is out of range or workspace dimensions are zero.`
+        );
+        if (scaledGridSize < 1)
+          console.log("[Grid Debug] Reason detail: scaledGridSize < 1");
+        if (workspace.offsetWidth <= 0)
+          console.log("[Grid Debug] Reason detail: workspace.offsetWidth <= 0");
+        if (workspace.offsetHeight <= 0)
+          console.log(
+            "[Grid Debug] Reason detail: workspace.offsetHeight <= 0"
+          );
+        if (scaledGridSize >= workspace.offsetWidth * 4)
+          console.log(
+            "[Grid Debug] Reason detail: scaledGridSize too large for width"
+          );
+        if (scaledGridSize >= workspace.offsetHeight * 4)
+          console.log(
+            "[Grid Debug] Reason detail: scaledGridSize too large for height"
+          );
+      }
+    } else {
+      workspace.style.backgroundSize = "";
+      workspace.style.backgroundPosition = "";
+      console.log(
+        `[Grid Debug] Grid NOT APPLIED. Class 'grid-visible' is ABSENT.`
+      );
+    }
   }
 
   function handlePanStart(event) {
@@ -606,6 +668,7 @@ const app = (function () {
         toNodeId: conn.toNodeId,
       })),
       viewTransform: viewTransform,
+      snapToGridEnabled: snapToGridEnabled,
     };
     saveMapData(data);
     console.log("Application state saved.");
@@ -618,7 +681,23 @@ const app = (function () {
 
       if (data.viewTransform) {
         viewTransform = data.viewTransform;
-        applyViewTransform();
+      }
+
+      snapToGridEnabled = data.snapToGridEnabled === true;
+      console.log(
+        `[Grid Debug] Loaded snapToGridEnabled: ${snapToGridEnabled}`
+      );
+      if (snapToGridEnabled) {
+        workspace.classList.add("grid-visible");
+      } else {
+        workspace.classList.remove("grid-visible");
+      }
+
+      if (
+        typeof ui !== "undefined" &&
+        typeof ui.updateSnapToGridButtonState === "function"
+      ) {
+        ui.updateSnapToGridButtonState(snapToGridEnabled);
       }
 
       if (data.nodes) {
@@ -662,6 +741,18 @@ const app = (function () {
       showNotification("Prethodna mapa uspešno učitana.", "success");
     } else {
       showNotification("Započnite kreiranjem nove ideje!", "info");
+      snapToGridEnabled = false;
+      workspace.classList.remove("grid-visible");
+      console.log(
+        `[Grid Debug] New map, snapToGridEnabled: ${snapToGridEnabled}`
+      );
+
+      if (
+        typeof ui !== "undefined" &&
+        typeof ui.updateSnapToGridButtonState === "function"
+      ) {
+        ui.updateSnapToGridButtonState(snapToGridEnabled);
+      }
     }
   }
 
@@ -688,6 +779,7 @@ const app = (function () {
         toNodeId: conn.toNodeId,
       })),
       viewTransform: viewTransform,
+      snapToGridEnabled: snapToGridEnabled,
     };
     const jsonString = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
@@ -720,8 +812,26 @@ const app = (function () {
 
           if (data.viewTransform) {
             viewTransform = data.viewTransform;
-            applyViewTransform();
           }
+
+          snapToGridEnabled = data.snapToGridEnabled === true;
+          console.log(
+            `[Grid Debug] Imported snapToGridEnabled: ${snapToGridEnabled}`
+          );
+          if (snapToGridEnabled) {
+            workspace.classList.add("grid-visible");
+          } else {
+            workspace.classList.remove("grid-visible");
+          }
+          if (
+            typeof ui !== "undefined" &&
+            typeof ui.updateSnapToGridButtonState === "function"
+          ) {
+            ui.updateSnapToGridButtonState(snapToGridEnabled);
+          }
+
+          applyViewTransform();
+
           nodes = data.nodes.map((nodeData) => {
             const node = Node.deserialize(nodeData);
             nodeLayer.appendChild(node.getElement());
@@ -806,19 +916,48 @@ const app = (function () {
       });
   }
 
+  function toggleSnapToGrid() {
+    snapToGridEnabled = !snapToGridEnabled;
+    showNotification(
+      `Lepljenje za mrežu ${snapToGridEnabled ? "uključeno" : "isključeno"}.`
+    );
+    console.log(
+      `[Grid Debug] Toggled snapToGridEnabled to: ${snapToGridEnabled}`
+    );
+
+    if (snapToGridEnabled) {
+      workspace.classList.add("grid-visible");
+    } else {
+      workspace.classList.remove("grid-visible");
+      workspace.style.backgroundSize = "";
+      workspace.style.backgroundPosition = "";
+    }
+
+    if (
+      typeof ui !== "undefined" &&
+      typeof ui.updateSnapToGridButtonState === "function"
+    ) {
+      ui.updateSnapToGridButtonState(snapToGridEnabled);
+    }
+    applyViewTransform();
+    saveState();
+  }
+
   return {
     init: init,
     addNode: addNode,
     deleteNode: deleteNode,
     findNodeById: findNodeById,
     selectNode: selectNode,
-    getSelectedNode: getSelectedNode, // Dodajemo novu metodu
+    getSelectedNode: getSelectedNode,
     updateConnectorsForNode: updateConnectorsForNode,
     saveState: saveState,
     startConnection: startConnection,
     initiateDrag: initiateDrag,
     isConnectingMode: isConnectingMode,
     wasDragging: wasDragging,
+    toggleSnapToGrid: toggleSnapToGrid,
+    isSnapToGridEnabled: isSnapToGridEnabled,
   };
 })();
 
