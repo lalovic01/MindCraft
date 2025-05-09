@@ -16,6 +16,7 @@ const closeIconPickerModalButton = document.getElementById(
   "close-icon-picker-modal-btn"
 );
 const iconListContainer = document.getElementById("icon-list-container");
+const snapToGridButton = document.getElementById("snap-to-grid-btn");
 
 const PREDEFINED_ICONS = [
   "fa-lightbulb",
@@ -338,11 +339,35 @@ function hideIconPickerModal() {
   iconPickerModal.classList.remove("visible");
 }
 
+function updateSnapToGridButtonState(isEnabled) {
+  if (snapToGridButton) {
+    if (isEnabled) {
+      snapToGridButton.classList.add("active");
+      snapToGridButton.title = "Isključi lepljenje za mrežu";
+    } else {
+      snapToGridButton.classList.remove("active");
+      snapToGridButton.title = "Uključi lepljenje za mrežu";
+    }
+  }
+}
+
 function initUI() {
   const savedTheme = loadTheme();
   applyTheme(savedTheme);
 
   themeToggleButton.addEventListener("click", toggleTheme);
+
+  if (snapToGridButton) {
+    snapToGridButton.addEventListener("click", () => {
+      app.toggleSnapToGrid();
+    });
+  }
+  if (
+    typeof app !== "undefined" &&
+    typeof app.isSnapToGridEnabled === "function"
+  ) {
+    updateSnapToGridButtonState(app.isSnapToGridEnabled());
+  }
 
   document.addEventListener("click", (event) => {
     if (contextMenuVisible && !contextMenu.contains(event.target)) {
@@ -567,3 +592,7 @@ function initUI() {
 
   console.log("UI Initialized");
 }
+
+const ui = {
+  updateSnapToGridButtonState: updateSnapToGridButtonState,
+};
