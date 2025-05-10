@@ -3,10 +3,12 @@ const app = (function () {
   const nodeLayer = document.getElementById("node-layer");
   const connectorLayer = document.getElementById("connector-layer");
   const addNodeButton = document.getElementById("add-node-btn");
+  const newProjectButton = document.getElementById("new-project-btn");
   const connectNodesButton = document.getElementById("connect-nodes-btn");
   const exportJsonButton = document.getElementById("export-json-btn");
   const importJsonInput = document.getElementById("import-json-input");
   const exportPngButton = document.getElementById("export-png-btn");
+  const helpButton = document.getElementById("help-btn");
 
   const GRID_SIZE = 20;
   let nodes = [];
@@ -44,18 +46,17 @@ const app = (function () {
     initUI();
     loadState();
     setupEventListeners();
-    applyViewTransform();
-    requestAnimationFrame(redrawAllConnectors);
     console.log("App Initialized.");
   }
 
   function setupEventListeners() {
     addNodeButton.addEventListener("click", () => addNode());
+    newProjectButton.addEventListener("click", createNewProject);
     connectNodesButton.addEventListener("click", toggleConnectionMode);
     exportJsonButton.addEventListener("click", exportMapJson);
     importJsonInput.addEventListener("change", importMapJson);
     exportPngButton.addEventListener("click", exportMapPng);
-
+    helpButton.addEventListener("click", () => ui.showHelpModal());
     workspace.addEventListener("mousedown", handlePanStart);
     workspace.addEventListener("touchstart", handlePanStart, {
       passive: false,
@@ -114,8 +115,11 @@ const app = (function () {
     if (x === undefined || y === undefined) {
       const rect = workspace.getBoundingClientRect();
 
-      x = (rect.width / 2 - viewTransform.x) / viewTransform.scale;
-      y = (rect.height / 2 - viewTransform.y) / viewTransform.scale;
+      const viewportCenterX = rect.width / 2;
+      const viewportCenterY = rect.height / 2;
+
+      x = (viewportCenterX - viewTransform.x) / viewTransform.scale;
+      y = (viewportCenterY - viewTransform.y) / viewTransform.scale;
     }
 
     const newNode = new Node(null, x, y, "Nova ideja", "", "#ffffff", null);
@@ -679,11 +683,9 @@ const app = (function () {
     if (data) {
       clearWorkspace();
 
-      if (data.viewTransform) {
-        viewTransform = data.viewTransform;
-      }
-
+      viewTransform = data.viewTransform || { x: 0, y: 0, scale: 1 };
       snapToGridEnabled = data.snapToGridEnabled === true;
+
       console.log(
         `[Grid Debug] Loaded snapToGridEnabled: ${snapToGridEnabled}`
       );
@@ -741,10 +743,12 @@ const app = (function () {
       showNotification("Prethodna mapa uspešno učitana.", "success");
     } else {
       showNotification("Započnite kreiranjem nove ideje!", "info");
+      clearWorkspace();
+      viewTransform = { x: 0, y: 0, scale: 1 };
       snapToGridEnabled = false;
       workspace.classList.remove("grid-visible");
       console.log(
-        `[Grid Debug] New map, snapToGridEnabled: ${snapToGridEnabled}`
+        `[Grid Debug] New map or no data, snapToGridEnabled: ${snapToGridEnabled}`
       );
 
       if (
@@ -754,6 +758,8 @@ const app = (function () {
         ui.updateSnapToGridButtonState(snapToGridEnabled);
       }
     }
+    applyViewTransform();
+    requestAnimationFrame(redrawAllConnectors);
   }
 
   function clearWorkspace() {
@@ -766,8 +772,9 @@ const app = (function () {
     connectors = [];
 
     selectedNode = null;
-    isConnecting = false;
-    connectionStartNode = null;
+    if (isConnecting) {
+      cancelConnectionMode();
+    }
   }
 
   function exportMapJson() {
@@ -941,6 +948,34 @@ const app = (function () {
     }
     applyViewTransform();
     saveState();
+  }
+
+  function createNewProject() {
+    showNotification("Kreiranje novog projekta...", "info");
+    clearWorkspace();
+    clearMapData();
+
+    viewTransform = { x: 0, y: 0, scale: 1 };
+
+    snapToGridEnabled = false;
+    if (workspace.classList.contains("grid-visible")) {
+      workspace.classList.remove("grid-visible");
+    }
+    if (
+      typeof ui !== "undefined" &&
+      typeof ui.updateSnapToGridButtonState === "function"
+    ) {
+      ui.updateSnapToGridButtonState(snapToGridEnabled);
+    }
+
+    applyViewTransform();
+    requestAnimationFrame(redrawAllConnectors);
+
+    saveState();
+    showNotification(
+      "Novi projekat je kreiran. Radna površina je očišćena.",
+      "success"
+    );
   }
 
   return {
