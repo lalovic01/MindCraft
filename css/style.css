@@ -571,6 +571,35 @@ body[data-theme="dark"] .notification.error {
   flex-grow: 1;
 }
 
+.help-modal-content h3 {
+  margin-top: 15px;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+  color: var(--primary-main);
+}
+.help-modal-content h3:first-child {
+  margin-top: 0;
+}
+.help-modal-content p {
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+.help-modal-content ul {
+  list-style-type: disc;
+  margin-left: 20px;
+  margin-bottom: 10px;
+}
+.help-modal-content li {
+  margin-bottom: 5px;
+}
+.help-modal-content strong {
+  font-weight: 600;
+}
+.help-modal-content i.fas {
+  margin: 0 2px;
+  color: var(--primary-main);
+}
+
 #history-list {
   list-style: none;
   padding: 0;
