@@ -18,6 +18,9 @@ const closeIconPickerModalButton = document.getElementById(
 const iconListContainer = document.getElementById("icon-list-container");
 const snapToGridButton = document.getElementById("snap-to-grid-btn");
 
+const helpModal = document.getElementById("help-modal");
+const closeHelpModalButton = document.getElementById("close-help-modal-btn");
+
 const PREDEFINED_ICONS = [
   "fa-lightbulb",
   "fa-comment",
@@ -242,6 +245,24 @@ function showHistoryModal(node) {
 
 function hideHistoryModal() {
   historyModal.classList.remove("visible");
+}
+
+function showHelpModal() {
+  if (helpModal) {
+    helpModal.style.display = "flex";
+    requestAnimationFrame(() => {
+      helpModal.classList.add("visible");
+    });
+  }
+}
+
+function hideHelpModal() {
+  if (helpModal) {
+    helpModal.classList.remove("visible");
+    setTimeout(() => {
+      helpModal.style.display = "none";
+    }, 300);
+  }
 }
 
 function showIconPickerModal(node) {
@@ -519,6 +540,17 @@ function initUI() {
     });
   }
 
+  if (closeHelpModalButton) {
+    closeHelpModalButton.addEventListener("click", hideHelpModal);
+  }
+  if (helpModal) {
+    helpModal.addEventListener("click", (event) => {
+      if (event.target === helpModal) {
+        hideHelpModal();
+      }
+    });
+  }
+
   updateNavbarHeight();
   window.addEventListener("resize", updateNavbarHeight);
 
@@ -595,4 +627,5 @@ function initUI() {
 
 const ui = {
   updateSnapToGridButtonState: updateSnapToGridButtonState,
+  showHelpModal: showHelpModal,
 };
