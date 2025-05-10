@@ -20,6 +20,9 @@
         <button id="add-node-btn" title="Dodaj novu ideju">
           <i class="fas fa-plus"></i> Dodaj
         </button>
+        <button id="new-project-btn" title="Započni novi projekat">
+          <i class="fas fa-file"></i> Novi projekat
+        </button>
         <button id="connect-nodes-btn" title="Poveži dve ideje">
           <i class="fas fa-link"></i> Poveži
         </button>
@@ -35,9 +38,9 @@
         <label
           for="import-json-input"
           class="tool-button"
-          title="Uvezi mapu iz JSON fajla"
+          title="Učitaj mapu iz JSON fajla"
         >
-          <i class="fas fa-file-import"></i> Uvezi JSON
+          <i class="fas fa-folder-open"></i> Učitaj mapu
           <input
             type="file"
             id="import-json-input"
@@ -50,6 +53,9 @@
         </button>
         <button id="theme-toggle-btn" title="Promeni temu">
           <i class="fas fa-adjust"></i> Tema
+        </button>
+        <button id="help-btn" title="Prikaži pomoć">
+          <i class="fas fa-question-circle"></i> Pomoć
         </button>
       </div>
     </nav>
@@ -101,6 +107,77 @@
         </div>
         <div class="modal-body">
           <ul id="history-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="help-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Pomoć – MindCraft</h2>
+          <button id="close-help-modal-btn" class="modal-close-btn">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body help-modal-content">
+          <h3>Osnovne Komande</h3>
+          <p>
+            <strong>Dodaj ideju:</strong> Kliknite na dugme
+            <i class="fas fa-plus"></i> "Dodaj" u navigaciji.
+          </p>
+          <p>
+            <strong>Novi projekat:</strong> Kliknite na
+            <i class="fas fa-file"></i> "Novi projekat" da obrišete trenutnu
+            mapu i započnete novu.
+          </p>
+          <p>
+            <strong>Poveži ideje:</strong> Kliknite na
+            <i class="fas fa-link"></i> "Poveži", zatim na prvi čvor pa na drugi
+            čvor.
+          </p>
+          <p>
+            <strong>Pomeranje mape (Pan):</strong> Držite levi klik miša na
+            praznom delu radne površine i pomerajte.
+          </p>
+          <p><strong>Zumiranje:</strong> Koristite točkić miša.</p>
+          <p>
+            <strong>Kontekstualni meni:</strong> Desni klik na ideju (čvor)
+            otvara dodatne opcije (izmeni, poveži, promeni boju, obriši,
+            istorija, ikona).
+          </p>
+
+          <h3>Prečice i Funkcije</h3>
+          <ul>
+            <li>
+              <strong>Izmena teksta:</strong> Dupli klik na naslov ili opis
+              ideje. Enter za potvrdu naslova.
+            </li>
+            <li>
+              <strong>Lepljenje za mrežu:</strong> Uključite/isključite pomoću
+              <i class="fas fa-th"></i> "Mreža" dugmeta.
+            </li>
+            <li>
+              <strong>Eksport/Import:</strong> Koristite
+              <i class="fas fa-file-export"></i> "Eksportuj JSON" i
+              <i class="fas fa-folder-open"></i> "Učitaj mapu" za čuvanje i
+              učitavanje mapa.
+            </li>
+            <li>
+              <strong>Eksport kao PNG:</strong> Kliknite na
+              <i class="fas fa-image"></i> "Eksportuj PNG".
+            </li>
+            <li>
+              <strong>Promena teme:</strong> Dugme
+              <i class="fas fa-adjust"></i> "Tema".
+            </li>
+          </ul>
+
+          <h3>Saveti</h3>
+          <p>
+            Redovno čuvajte svoj napredak eksportovanjem mape. Aplikacija
+            automatski čuva stanje u pretraživaču, ali JSON eksport je sigurnija
+            opcija za bekap.
+          </p>
         </div>
       </div>
     </div>
