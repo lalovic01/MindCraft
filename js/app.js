@@ -8,12 +8,11 @@ const app = (function () {
   const exportJsonButton = document.getElementById("export-json-btn");
   const importJsonInput = document.getElementById("import-json-input");
   const exportPngButton = document.getElementById("export-png-btn");
-  const exportPdfButton = document.getElementById("export-pdf-btn"); // PDF export button
+  const exportPdfButton = document.getElementById("export-pdf-btn");
   const helpButton = document.getElementById("help-btn");
 
   const GRID_SIZE = 20;
   let nodes = [];
-  let connectors = [];
   let selectedNode = null;
   let isDraggingNode = false;
   let isPanning = false;
@@ -21,9 +20,6 @@ const app = (function () {
   let panStartX, panStartY;
   let viewTransform = { x: 0, y: 0, scale: 1 };
   let snapToGridEnabled = false;
-
-  let isConnecting = false;
-  let connectionStartNode = null;
   let lastDragEndTime = 0;
 
   function getSelectedNode() {
@@ -45,6 +41,18 @@ const app = (function () {
   function init() {
     console.log("App Initializing...");
     initUI();
+
+    connectorManager.init(
+      findNodeById,
+      saveState,
+      showNotification,
+      deselectNode,
+      getSelectedNode,
+      workspace,
+      connectorLayer,
+      connectNodesButton
+    );
+
     loadState();
     setupEventListeners();
     console.log("App Initialized.");
@@ -53,11 +61,10 @@ const app = (function () {
   function setupEventListeners() {
     addNodeButton.addEventListener("click", () => addNode());
     newProjectButton.addEventListener("click", createNewProject);
-    connectNodesButton.addEventListener("click", toggleConnectionMode);
     exportJsonButton.addEventListener("click", exportMapJson);
     importJsonInput.addEventListener("change", importMapJson);
     exportPngButton.addEventListener("click", exportMapPng);
-    exportPdfButton.addEventListener("click", exportMapPdf); // Listener for PDF export
+    exportPdfButton.addEventListener("click", exportMapPdf);
     helpButton.addEventListener("click", () => ui.showHelpModal());
     workspace.addEventListener("mousedown", handlePanStart);
     workspace.addEventListener("touchstart", handlePanStart, {
@@ -82,8 +89,8 @@ const app = (function () {
         e.target === connectorLayer
       ) {
         deselectNode();
-        if (isConnecting && connectionStartNode) {
-          cancelConnectionMode();
+        if (connectorManager.isConnectingMode()) {
+          connectorManager.cancelConnectionMode();
         }
       }
     });
@@ -142,10 +149,7 @@ const app = (function () {
 
     nodeToDelete.remove();
 
-    const connectorsToRemove = connectors.filter(
-      (conn) => conn.fromNodeId === nodeId || conn.toNodeId === nodeId
-    );
-    connectorsToRemove.forEach((conn) => removeConnector(conn));
+    connectorManager.removeConnectorsForNode(nodeId);
 
     if (selectedNode && selectedNode.id === nodeId) {
       selectedNode = null;
@@ -166,12 +170,18 @@ const app = (function () {
 
     if (
       !internalCall &&
-      isConnecting &&
-      connectionStartNode &&
-      nodeToSelect !== connectionStartNode
+      connectorManager.isConnectingMode() &&
+      connectorManager.getConnectionStartNode() &&
+      nodeToSelect !== connectorManager.getConnectionStartNode()
     ) {
-      createConnector(connectionStartNode, nodeToSelect);
-      cancelConnectionMode();
+      if (
+        connectorManager.createConnector(
+          connectorManager.getConnectionStartNode(),
+          nodeToSelect
+        )
+      ) {
+        connectorManager.cancelConnectionMode();
+      }
       return;
     }
 
@@ -305,187 +315,12 @@ const app = (function () {
     }
   }
 
-  function toggleConnectionMode() {
-    if (isConnecting) {
-      cancelConnectionMode();
-    } else if (selectedNode) {
-      startConnection(selectedNode);
-    } else {
-      showNotification(
-        "Prvo selektujte čvor iz kojeg želite da povučete vezu.",
-        "warning"
-      );
-    }
-  }
-
-  function startConnection(node) {
-    isConnecting = true;
-    connectionStartNode = node;
-    workspace.classList.add("connecting");
-    node.getElement().classList.add("connecting-start");
-    connectNodesButton.classList.add("active");
-    connectNodesButton.innerHTML = '<i class="fas fa-times"></i> Otkaži';
-    showNotification(
-      `Kliknite na drugi čvor da biste ga povezali sa "${node.title}" ili kliknite na prazno da otkažete.`
-    );
-    deselectNode();
-  }
-
-  function cancelConnectionMode() {
-    if (!isConnecting) return;
-    isConnecting = false;
-    workspace.classList.remove("connecting");
-    if (connectionStartNode) {
-      connectionStartNode.getElement().classList.remove("connecting-start");
-      connectionStartNode = null;
-    }
-    connectNodesButton.classList.remove("active");
-    connectNodesButton.innerHTML = '<i class="fas fa-link"></i> Poveži';
-  }
-
-  function createConnector(fromNode, toNode) {
-    if (!fromNode || !toNode || fromNode === toNode) return;
-
-    const existing = connectors.find(
-      (conn) =>
-        (conn.fromNodeId === fromNode.id && conn.toNodeId === toNode.id) ||
-        (conn.fromNodeId === toNode.id && conn.toNodeId === fromNode.id)
-    );
-    if (existing) {
-      showNotification("Ova dva čvora su već povezana.", "warning");
-      return;
-    }
-
-    const connectorId = `conn_${fromNode.id}_${toNode.id}`;
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("id", connectorId);
-    line.classList.add("connector-line");
-
-    const newConnector = {
-      id: connectorId,
-      fromNodeId: fromNode.id,
-      toNodeId: toNode.id,
-      element: line,
-    };
-
-    connectors.push(newConnector);
-    connectorLayer.appendChild(line);
-    updateConnectorPosition(newConnector);
-    showNotification(
-      `Povezani čvorovi: "${fromNode.title}" i "${toNode.title}".`,
-      "success"
-    );
-    saveState();
-  }
-
-  function removeConnector(connectorToRemove) {
-    if (!connectorToRemove) return;
-
-    connectors = connectors.filter((conn) => conn.id !== connectorToRemove.id);
-
-    if (connectorToRemove.element) {
-      connectorToRemove.element.remove();
-    }
-  }
-
-  function updateConnectorPosition(connector) {
-    const fromNode = findNodeById(connector.fromNodeId);
-    const toNode = findNodeById(connector.toNodeId);
-    if (!fromNode || !toNode || !connector.element) {
-      console.warn(
-        "updateConnectorPosition: Missing node or element for connector",
-        connector.id
-      );
-      return;
-    }
-
-    const line = connector.element;
-    const fromNodeEl = fromNode.getElement();
-    const toNodeEl = toNode.getElement();
-
-    if (!fromNodeEl || !toNodeEl) {
-      console.warn(
-        "updateConnectorPosition: Node element not found for connector",
-        connector.id
-      );
-      return;
-    }
-
-    const svgX1 = fromNode.x + fromNodeEl.offsetWidth / 2;
-    const svgY1 = fromNode.y + fromNodeEl.offsetHeight / 2;
-    const svgX2 = toNode.x + toNodeEl.offsetWidth / 2;
-    const svgY2 = toNode.y + toNodeEl.offsetHeight / 2;
-
-    const fromRect = fromNodeEl.getBoundingClientRect();
-    const workspaceRect = workspace.getBoundingClientRect();
-    const old_svgX1 =
-      (fromRect.left +
-        fromRect.width / 2 -
-        workspaceRect.left -
-        viewTransform.x) /
-      viewTransform.scale;
-    const old_svgY1 =
-      (fromRect.top +
-        fromRect.height / 2 -
-        workspaceRect.top -
-        viewTransform.y) /
-      viewTransform.scale;
-    console.log(
-      `Connector: ${connector.id} (Screen Width: ${window.innerWidth}px)`
-    );
-    console.log(
-      `  From Node (${fromNode.id}): node.x=${fromNode.x.toFixed(
-        2
-      )}, node.y=${fromNode.y.toFixed(2)}, offsetWidth=${
-        fromNodeEl.offsetWidth
-      }, offsetHeight=${fromNodeEl.offsetHeight}`
-    );
-    console.log(
-      `  To Node (${toNode.id}): node.x=${toNode.x.toFixed(
-        2
-      )}, node.y=${toNode.y.toFixed(2)}, offsetWidth=${
-        toNodeEl.offsetWidth
-      }, offsetHeight=${toNodeEl.offsetHeight}`
-    );
-    console.log(
-      `  NEW SVG Coords: x1=${svgX1.toFixed(2)}, y1=${svgY1.toFixed(
-        2
-      )}, x2=${svgX2.toFixed(2)}, y2=${svgY2.toFixed(2)}`
-    );
-    console.log(
-      `  OLD SVG Coords (for comparison): x1=${old_svgX1.toFixed(
-        2
-      )}, y1=${old_svgY1.toFixed(2)}`
-    );
-
-    line.setAttribute("x1", svgX1);
-    line.setAttribute("y1", svgY1);
-    line.setAttribute("x2", svgX2);
-    line.setAttribute("y2", svgY2);
-  }
-
   function updateConnectorsForNode(node) {
-    connectors.forEach((conn) => {
-      if (conn.fromNodeId === node.id || conn.toNodeId === node.id) {
-        updateConnectorPosition(conn);
-      }
-    });
+    connectorManager.updateConnectorsForNode(node);
   }
 
   function redrawAllConnectors() {
-    connectors.forEach((conn) => {
-      if (!conn.element) {
-        const line = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "line"
-        );
-        line.setAttribute("id", conn.id);
-        line.classList.add("connector-line");
-        conn.element = line;
-        connectorLayer.appendChild(line);
-      }
-      updateConnectorPosition(conn);
-    });
+    connectorManager.redrawAllConnectors();
   }
 
   function applyViewTransform() {
@@ -555,7 +390,7 @@ const app = (function () {
 
     if (
       isDraggingNode ||
-      isConnecting ||
+      connectorManager.isConnectingMode() ||
       isNodeTarget ||
       !(isPrimaryAction || isMiddleMousePan)
     )
@@ -668,11 +503,7 @@ const app = (function () {
   function saveState() {
     const data = {
       nodes: nodes.map((node) => node.serialize()),
-      connectors: connectors.map((conn) => ({
-        id: conn.id,
-        fromNodeId: conn.fromNodeId,
-        toNodeId: conn.toNodeId,
-      })),
+      connectors: connectorManager.getSerializedData(),
       viewTransform: viewTransform,
       snapToGridEnabled: snapToGridEnabled,
     };
@@ -714,31 +545,7 @@ const app = (function () {
       }
 
       if (data.connectors) {
-        const loadedConnectors = data.connectors
-          .map((connData) => {
-            const fromNode = findNodeById(connData.fromNodeId);
-            const toNode = findNodeById(connData.toNodeId);
-            if (fromNode && toNode) {
-              const line = document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "line"
-              );
-              line.setAttribute("id", connData.id);
-              line.classList.add("connector-line");
-              connectorLayer.appendChild(line);
-              return {
-                id: connData.id,
-                fromNodeId: connData.fromNodeId,
-                toNodeId: connData.toNodeId,
-                element: line,
-              };
-            }
-            return null;
-          })
-          .filter((conn) => conn !== null);
-
-        connectors = loadedConnectors;
-        redrawAllConnectors();
+        connectorManager.loadSerializedData(data.connectors);
       }
 
       console.log("Application state loaded.");
@@ -767,26 +574,15 @@ const app = (function () {
   function clearWorkspace() {
     nodes.forEach((node) => node.remove());
     nodes = [];
-
-    connectors.forEach((conn) => {
-      if (conn.element) conn.element.remove();
-    });
-    connectors = [];
+    connectorManager.clearData();
 
     selectedNode = null;
-    if (isConnecting) {
-      cancelConnectionMode();
-    }
   }
 
   function exportMapJson() {
     const data = {
       nodes: nodes.map((node) => node.serialize()),
-      connectors: connectors.map((conn) => ({
-        id: conn.id,
-        fromNodeId: conn.fromNodeId,
-        toNodeId: conn.toNodeId,
-      })),
+      connectors: connectorManager.getSerializedData(),
       viewTransform: viewTransform,
       snapToGridEnabled: snapToGridEnabled,
     };
@@ -847,30 +643,9 @@ const app = (function () {
 
             return node;
           });
-          const loadedConnectors = data.connectors
-            .map((connData) => {
-              const fromNode = findNodeById(connData.fromNodeId);
-              const toNode = findNodeById(connData.toNodeId);
-              if (fromNode && toNode) {
-                const line = document.createElementNS(
-                  "http://www.w3.org/2000/svg",
-                  "line"
-                );
-                line.setAttribute("id", connData.id);
-                line.classList.add("connector-line");
-                connectorLayer.appendChild(line);
-                return {
-                  id: connData.id,
-                  fromNodeId: connData.fromNodeId,
-                  toNodeId: connData.toNodeId,
-                  element: line,
-                };
-              }
-              return null;
-            })
-            .filter((conn) => conn !== null);
-          connectors = loadedConnectors;
-          redrawAllConnectors();
+          if (data.connectors) {
+            connectorManager.loadSerializedData(data.connectors);
+          }
 
           showNotification("Mapa uspešno uvezena iz JSON fajla.", "success");
           saveState();
@@ -965,14 +740,12 @@ const app = (function () {
           const imgWidth = this.naturalWidth;
           const imgHeight = this.naturalHeight;
 
-          // Determine orientation: 'p' for portrait, 'l' for landscape
           const orientation = imgWidth > imgHeight ? "l" : "p";
-          const pdf = new jsPDF(orientation, "px", [imgWidth, imgHeight]); // Use image dimensions for page size
+          const pdf = new jsPDF(orientation, "px", [imgWidth, imgHeight]);
 
           const pdfWidth = pdf.internal.pageSize.getWidth();
           const pdfHeight = pdf.internal.pageSize.getHeight();
 
-          // Add image to PDF, fitting it to the page size determined by image dimensions
           pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
           pdf.save("mindcraft_map.pdf");
           showNotification("Mapa eksportovana kao PDF dokument.", "success");
@@ -1055,10 +828,11 @@ const app = (function () {
     selectNode: selectNode,
     getSelectedNode: getSelectedNode,
     updateConnectorsForNode: updateConnectorsForNode,
+    redrawAllConnectors: redrawAllConnectors,
     saveState: saveState,
-    startConnection: startConnection,
+    startConnection: (node) => connectorManager.startConnection(node),
     initiateDrag: initiateDrag,
-    isConnectingMode: isConnectingMode,
+    isConnectingMode: () => connectorManager.isConnectingMode(),
     wasDragging: wasDragging,
     toggleSnapToGrid: toggleSnapToGrid,
     isSnapToGridEnabled: isSnapToGridEnabled,
