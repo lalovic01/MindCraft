@@ -8,6 +8,7 @@ const app = (function () {
   const exportJsonButton = document.getElementById("export-json-btn");
   const importJsonInput = document.getElementById("import-json-input");
   const exportPngButton = document.getElementById("export-png-btn");
+  const exportPdfButton = document.getElementById("export-pdf-btn"); // PDF export button
   const helpButton = document.getElementById("help-btn");
 
   const GRID_SIZE = 20;
@@ -56,6 +57,7 @@ const app = (function () {
     exportJsonButton.addEventListener("click", exportMapJson);
     importJsonInput.addEventListener("change", importMapJson);
     exportPngButton.addEventListener("click", exportMapPng);
+    exportPdfButton.addEventListener("click", exportMapPdf); // Listener for PDF export
     helpButton.addEventListener("click", () => ui.showHelpModal());
     workspace.addEventListener("mousedown", handlePanStart);
     workspace.addEventListener("touchstart", handlePanStart, {
@@ -918,6 +920,73 @@ const app = (function () {
         console.error("Greška tokom dom-to-image eksporta:", error);
         showNotification(
           `Greška pri kreiranju PNG slike: ${error.message || error}`,
+          "error"
+        );
+      });
+  }
+
+  function exportMapPdf() {
+    showNotification("Priprema PDF eksport...");
+
+    if (typeof domtoimage === "undefined") {
+      console.error("dom-to-image-more library is not loaded!");
+      showNotification(
+        "Greška: Biblioteka za eksport (dom-to-image) nije učitana.",
+        "error"
+      );
+      return;
+    }
+    if (
+      typeof window.jspdf === "undefined" ||
+      typeof window.jspdf.jsPDF === "undefined"
+    ) {
+      console.error("jsPDF library is not loaded!");
+      showNotification(
+        "Greška: Biblioteka za PDF eksport (jsPDF) nije učitana.",
+        "error"
+      );
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const nodeToCapture = workspace;
+    const options = {
+      quality: 0.95,
+      bgcolor: getComputedStyle(document.body)
+        .getPropertyValue("--background-main")
+        .trim(),
+    };
+
+    domtoimage
+      .toPng(nodeToCapture, options)
+      .then(function (dataUrl) {
+        const img = new Image();
+        img.onload = function () {
+          const imgWidth = this.naturalWidth;
+          const imgHeight = this.naturalHeight;
+
+          // Determine orientation: 'p' for portrait, 'l' for landscape
+          const orientation = imgWidth > imgHeight ? "l" : "p";
+          const pdf = new jsPDF(orientation, "px", [imgWidth, imgHeight]); // Use image dimensions for page size
+
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+
+          // Add image to PDF, fitting it to the page size determined by image dimensions
+          pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
+          pdf.save("mindcraft_map.pdf");
+          showNotification("Mapa eksportovana kao PDF dokument.", "success");
+        };
+        img.onerror = function () {
+          console.error("Greška pri učitavanju slike za PDF.");
+          showNotification("Greška pri generisanju slike za PDF.", "error");
+        };
+        img.src = dataUrl;
+      })
+      .catch(function (error) {
+        console.error("Greška tokom dom-to-image za PDF eksport:", error);
+        showNotification(
+          `Greška pri kreiranju PDF dokumenta: ${error.message || error}`,
           "error"
         );
       });
