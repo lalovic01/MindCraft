@@ -5,7 +5,7 @@ function saveTheme(theme) {
   try {
     localStorage.setItem(STORAGE_KEY_THEME, theme);
   } catch (e) {
-    console.error("Error saving theme to localStorage:", e);
+    logger.error("Error saving theme to localStorage:", e);
   }
 }
 
@@ -13,7 +13,7 @@ function loadTheme() {
   try {
     return localStorage.getItem(STORAGE_KEY_THEME) || "light";
   } catch (e) {
-    console.error("Error loading theme from localStorage:", e);
+    logger.error("Error loading theme from localStorage:", e);
     return "light";
   }
 }
@@ -21,9 +21,9 @@ function loadTheme() {
 function saveMapData(mapData) {
   try {
     localStorage.setItem(STORAGE_KEY_MAP, JSON.stringify(mapData));
-    console.log("Map data saved.");
+    logger.info("Map data saved.");
   } catch (e) {
-    console.error("Error saving map data to localStorage:", e);
+    logger.error("Error saving map data to localStorage:", e);
   }
 }
 
@@ -31,12 +31,12 @@ function loadMapData() {
   try {
     const data = localStorage.getItem(STORAGE_KEY_MAP);
     if (data) {
-      console.log("Map data loaded.");
+      logger.info("Map data loaded.");
       return JSON.parse(data);
     }
     return null;
   } catch (e) {
-    console.error("Error loading map data from localStorage:", e);
+    logger.error("Error loading map data from localStorage:", e);
     return null;
   }
 }
@@ -44,8 +44,8 @@ function loadMapData() {
 function clearMapData() {
   try {
     localStorage.removeItem(STORAGE_KEY_MAP);
-    console.log("Map data cleared.");
+    logger.info("Map data cleared.");
   } catch (e) {
-    console.error("Error clearing map data from localStorage:", e);
+    logger.error("Error clearing map data from localStorage:", e);
   }
 }
