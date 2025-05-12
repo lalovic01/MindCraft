@@ -108,6 +108,66 @@ class Node {
       app.initiateDrag(this, event);
     });
 
+    let longPressTimer = null;
+    let touchStartX, touchStartY;
+    const LONG_PRESS_DURATION = 700;
+    const MAX_MOVE_THRESHOLD = 10;
+
+    this.element.addEventListener(
+      "touchstart",
+      (event) => {
+        if (app.isConnectingMode()) return;
+        if (event.target.closest('[contenteditable="true"]')) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+          return;
+        }
+
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+
+        clearTimeout(longPressTimer);
+        longPressTimer = setTimeout(() => {
+          longPressTimer = null;
+          this.element.classList.add("long-press-active");
+          setTimeout(
+            () => this.element.classList.remove("long-press-active"),
+            500
+          );
+
+          const touch = event.touches[0] || event.changedTouches[0];
+          if (typeof showContextMenu === "function") {
+            showContextMenu(touch.clientX, touch.clientY, this);
+          } else {
+            logger.error(
+              "showContextMenu function not available for node long press."
+            );
+          }
+          event.preventDefault();
+        }, LONG_PRESS_DURATION);
+      },
+      { passive: false }
+    );
+
+    this.element.addEventListener("touchmove", (event) => {
+      if (longPressTimer) {
+        const touchMoveX = event.touches[0].clientX;
+        const touchMoveY = event.touches[0].clientY;
+        if (
+          Math.abs(touchMoveX - touchStartX) > MAX_MOVE_THRESHOLD ||
+          Math.abs(touchMoveY - touchStartY) > MAX_MOVE_THRESHOLD
+        ) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+      }
+    });
+
+    this.element.addEventListener("touchend", (event) => {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    });
+
     this.element.addEventListener(
       "touchstart",
       (event) => {
@@ -145,6 +205,11 @@ class Node {
     });
 
     this.element.addEventListener("click", (e) => {
+      if (this.element.classList.contains("long-press-active")) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       if (this.element.classList.contains("dragging-ended-recently")) {
         this.element.classList.remove("dragging-ended-recently");
         return;
