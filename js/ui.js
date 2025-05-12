@@ -85,6 +85,7 @@ let currentTheme = "light";
 let contextMenuVisible = false;
 let contextTargetNode = null;
 let tippyInstances = [];
+let contextMenuOpenedAtX, contextMenuOpenedAtY;
 
 function updateNavbarHeight() {
   if (navbar) {
@@ -146,8 +147,9 @@ function showNotification(message, type = "info") {
 
 function showContextMenu(x, y, targetNode) {
   if (!targetNode) {
-    logger.warn("Kontekstualni meni otvoren bez ciljnog čvora.");
   }
+  contextMenuOpenedAtX = x;
+  contextMenuOpenedAtY = y;
 
   const historyOption = contextMenu.querySelector('li[data-action="history"]');
   if (historyOption) {
@@ -171,12 +173,17 @@ function showContextMenu(x, y, targetNode) {
   });
   contextMenuVisible = true;
 
+  const addOption = contextMenu.querySelector('li[data-action="add"]');
+  if (addOption) {
+    addOption.style.display = targetNode ? "none" : "flex";
+  }
+
   const connectOption = contextMenu.querySelector('li[data-action="connect"]');
   if (connectOption) {
     connectOption.style.display = targetNode ? "flex" : "none";
   }
   const nodeSpecificOptions = contextMenu.querySelectorAll(
-    'li[data-action="edit"], li[data-action="color"], li[data-action="delete"], li[data-action="history"]'
+    'li[data-action="edit"], li[data-action="color"], li[data-action="delete"], li[data-action="history"], li[data-action="icon"]'
   );
   nodeSpecificOptions.forEach(
     (opt) => (opt.style.display = targetNode ? "flex" : "none")
@@ -413,23 +420,22 @@ function initUI() {
 
     const action = actionItem.dataset.action;
 
-    if (!contextTargetNode && action !== "color" && action !== "add") {
+    if (!contextTargetNode && action !== "add") {
       logger.error(
-        "Akcija kontekstualnog menija pokrenuta, ali contextTargetNode je null."
-      );
-      hideContextMenu(true);
-      return;
-    }
-
-    if (action !== "color" && action !== "add" && !contextTargetNode) {
-      logger.error(
-        `Akcija "${action}" zahteva contextTargetNode, ali je null.`
+        `Akcija "${action}" zahteva contextTargetNode ili da bude 'add', ali uslovi nisu ispunjeni.`
       );
       hideContextMenu(true);
       return;
     }
 
     if (action !== "color" && action !== "add") {
+      if (!contextTargetNode) {
+        logger.error(
+          `Akcija "${action}" zahteva contextTargetNode, ali je null.`
+        );
+        hideContextMenu(true);
+        return;
+      }
       logger.debug(
         `Akcija kontekstualnog menija "${action}" izabrana za čvor:`,
         contextTargetNode.id
@@ -441,6 +447,17 @@ function initUI() {
     }
 
     switch (action) {
+      case "add":
+        if (typeof app.addNodeAtViewportCoordinates === "function") {
+          app.addNodeAtViewportCoordinates(
+            contextMenuOpenedAtX,
+            contextMenuOpenedAtY
+          );
+        } else {
+          logger.error("app.addNodeAtViewportCoordinates is not defined.");
+        }
+        hideContextMenu(true);
+        break;
       case "edit":
         contextTargetNode.focusTitle();
         hideContextMenu(true);
