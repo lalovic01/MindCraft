@@ -699,10 +699,11 @@ body[data-theme="dark"] .notification.error {
   .navbar .tools button,
   .navbar .tools .tool-button {
     margin-left: 0;
-    padding: 8px 12px;
+    padding: 10px 15px;
     font-size: 0.9em;
     flex-grow: 1;
     min-width: 120px;
+    justify-content: center;
   }
 
   #workspace {
@@ -743,14 +744,14 @@ body[data-theme="dark"] .notification.error {
 @media (max-width: 480px) {
   .navbar .tools button,
   .navbar .tools .tool-button {
-    font-size: 0.85em;
-    padding: 6px 10px;
-    gap: 5px;
+    font-size: 0.9em;
+    padding: 10px 12px;
+    gap: 6px;
     min-width: auto;
   }
   .navbar .tools button i,
   .navbar .tools .tool-button i {
-    margin-right: 3px;
+    margin-right: 4px;
   }
   .node {
     padding: 10px;
