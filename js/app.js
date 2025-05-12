@@ -83,6 +83,11 @@ const app = (function () {
 
     workspace.addEventListener("click", (e) => {
       if (wasDragging()) return;
+      if (workspace.classList.contains("long-press-active-ws")) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       if (
         e.target === workspace ||
         e.target === nodeLayer ||
@@ -118,6 +123,74 @@ const app = (function () {
       console.log("Pronađen čvor za kontekstualni meni:", targetNodeInstance);
       showContextMenu(event.clientX, event.clientY, targetNodeInstance);
     });
+
+    let workspaceLongPressTimer = null;
+    let workspaceTouchStartX, workspaceTouchStartY;
+    const WORKSPACE_LONG_PRESS_DURATION = 700;
+    const WORKSPACE_MAX_MOVE_THRESHOLD = 10;
+
+    workspace.addEventListener(
+      "touchstart",
+      (event) => {
+        if (event.target.closest(".node") || event.target.closest(".navbar")) {
+          clearTimeout(workspaceLongPressTimer);
+          workspaceLongPressTimer = null;
+          return;
+        }
+        if (isPanning || (event.type === "mousedown" && event.button === 1)) {
+          clearTimeout(workspaceLongPressTimer);
+          workspaceLongPressTimer = null;
+          return;
+        }
+
+        workspaceTouchStartX = event.touches[0].clientX;
+        workspaceTouchStartY = event.touches[0].clientY;
+
+        clearTimeout(workspaceLongPressTimer);
+        workspaceLongPressTimer = setTimeout(() => {
+          workspaceLongPressTimer = null;
+          if (isPanning || isDraggingNode) return;
+
+          workspace.classList.add("long-press-active-ws");
+          setTimeout(
+            () => workspace.classList.remove("long-press-active-ws"),
+            500
+          );
+
+          const touch = event.touches[0] || event.changedTouches[0];
+          if (typeof showContextMenu === "function") {
+            showContextMenu(touch.clientX, touch.clientY, null);
+          } else {
+            console.error(
+              "showContextMenu function not available for workspace long press."
+            );
+          }
+          event.preventDefault();
+        }, WORKSPACE_LONG_PRESS_DURATION);
+      },
+      { passive: false }
+    );
+
+    workspace.addEventListener("touchmove", (event) => {
+      if (workspaceLongPressTimer) {
+        const touchMoveX = event.touches[0].clientX;
+        const touchMoveY = event.touches[0].clientY;
+        if (
+          Math.abs(touchMoveX - workspaceTouchStartX) >
+            WORKSPACE_MAX_MOVE_THRESHOLD ||
+          Math.abs(touchMoveY - workspaceTouchStartY) >
+            WORKSPACE_MAX_MOVE_THRESHOLD
+        ) {
+          clearTimeout(workspaceLongPressTimer);
+          workspaceLongPressTimer = null;
+        }
+      }
+    });
+
+    workspace.addEventListener("touchend", (event) => {
+      clearTimeout(workspaceLongPressTimer);
+      workspaceLongPressTimer = null;
+    });
   }
 
   function addNode(x, y) {
@@ -138,6 +211,23 @@ const app = (function () {
     showNotification(`Ideja "${newNode.title}" dodata.`);
     saveState();
     return newNode;
+  }
+
+  function addNodeAtViewportCoordinates(viewportX, viewportY) {
+    const rect = workspace.getBoundingClientRect();
+    const worldX =
+      (viewportX - rect.left - viewTransform.x) / viewTransform.scale;
+    const worldY =
+      (viewportY - rect.top - viewTransform.y) / viewTransform.scale;
+
+    if (snapToGridEnabled) {
+      addNode(
+        Math.round(worldX / GRID_SIZE) * GRID_SIZE,
+        Math.round(worldY / GRID_SIZE) * GRID_SIZE
+      );
+    } else {
+      addNode(worldX, worldY);
+    }
   }
 
   function deleteNode(nodeToDelete) {
@@ -836,6 +926,7 @@ const app = (function () {
     wasDragging: wasDragging,
     toggleSnapToGrid: toggleSnapToGrid,
     isSnapToGridEnabled: isSnapToGridEnabled,
+    addNodeAtViewportCoordinates: addNodeAtViewportCoordinates,
   };
 })();
 
