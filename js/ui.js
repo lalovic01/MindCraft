@@ -118,7 +118,7 @@ function toggleTheme() {
     tippyInstances.forEach((instance) => {
       instance.setProps({ theme: newTippyTheme });
     });
-    console.log(`Tippy themes updated to: ${newTippyTheme}`);
+    logger.debug(`Tippy themes updated to: ${newTippyTheme}`);
   }
 }
 
@@ -146,8 +146,7 @@ function showNotification(message, type = "info") {
 
 function showContextMenu(x, y, targetNode) {
   if (!targetNode) {
-    console.warn("Kontekstualni meni otvoren bez ciljnog čvora.");
-    return;
+    logger.warn("Kontekstualni meni otvoren bez ciljnog čvora.");
   }
 
   const historyOption = contextMenu.querySelector('li[data-action="history"]');
@@ -158,7 +157,10 @@ function showContextMenu(x, y, targetNode) {
         : "none";
   }
 
-  console.log("Otvaranje kontekstualnog menija za čvor:", targetNode);
+  logger.debug(
+    "Otvaranje kontekstualnog menija za čvor:",
+    targetNode ? targetNode.id : "workspace"
+  );
 
   contextTargetNode = targetNode;
   contextMenu.style.left = `${x}px`;
@@ -282,27 +284,27 @@ function showIconPickerModal(node) {
       : iconCode;
 
     iconItem.addEventListener("click", () => {
-      console.log(
+      logger.debug(
         `Icon clicked in picker. Icon code: "${iconCode}". Attempting to set icon for node:`,
-        node
+        node ? node.id : "null"
       );
       if (node) {
         if (typeof node.setIcon === "function") {
           if (node.icon !== iconCode) {
-            console.log(`Calling node.setIcon("${iconCode}")`);
+            logger.debug(`Calling node.setIcon("${iconCode}")`);
             node.setIcon(iconCode);
           } else {
-            console.log("Icon is the same, not calling setIcon.");
+            logger.debug("Icon is the same, not calling setIcon.");
           }
         } else {
-          console.error("CRITICAL: node.setIcon is NOT a function!", node);
+          logger.critical("CRITICAL: node.setIcon is NOT a function!", node);
           showNotification(
             "Greška: Ne može se postaviti ikona. Metoda nije pronađena.",
             "error"
           );
         }
       } else {
-        console.error(
+        logger.critical(
           "CRITICAL: 'node' is null or undefined when trying to set icon from picker!"
         );
         showNotification("Greška: Ciljni čvor nije definisan.", "error");
@@ -318,20 +320,20 @@ function showIconPickerModal(node) {
   removeIconItem.innerHTML = `<i class="fas fa-ban"></i>`;
   removeIconItem.title = "Ukloni ikonu";
   removeIconItem.addEventListener("click", () => {
-    console.log(
+    logger.debug(
       "Remove icon clicked. Attempting to remove icon for node:",
-      node
+      node ? node.id : "null"
     );
     if (node) {
       if (typeof node.setIcon === "function") {
         if (node.icon !== null && node.icon !== "") {
-          console.log("Calling node.setIcon(null) to remove icon.");
+          logger.debug("Calling node.setIcon(null) to remove icon.");
           node.setIcon(null);
         } else {
-          console.log("Node already has no icon, not calling setIcon.");
+          logger.debug("Node already has no icon, not calling setIcon.");
         }
       } else {
-        console.error(
+        logger.critical(
           "CRITICAL: node.setIcon is NOT a function when trying to remove icon!",
           node
         );
@@ -341,7 +343,7 @@ function showIconPickerModal(node) {
         );
       }
     } else {
-      console.error(
+      logger.critical(
         "CRITICAL: 'node' is null or undefined when trying to remove icon!"
       );
       showNotification("Greška: Ciljni čvor nije definisan.", "error");
@@ -411,26 +413,30 @@ function initUI() {
 
     const action = actionItem.dataset.action;
 
-    if (!contextTargetNode && action !== "color") {
-      console.error(
+    if (!contextTargetNode && action !== "color" && action !== "add") {
+      logger.error(
         "Akcija kontekstualnog menija pokrenuta, ali contextTargetNode je null."
       );
       hideContextMenu(true);
       return;
     }
 
-    if (action !== "color" && !contextTargetNode) {
-      console.error(
+    if (action !== "color" && action !== "add" && !contextTargetNode) {
+      logger.error(
         `Akcija "${action}" zahteva contextTargetNode, ali je null.`
       );
       hideContextMenu(true);
       return;
     }
 
-    if (action !== "color") {
-      console.log(
+    if (action !== "color" && action !== "add") {
+      logger.debug(
         `Akcija kontekstualnog menija "${action}" izabrana za čvor:`,
         contextTargetNode.id
+      );
+    } else if (action === "add") {
+      logger.debug(
+        `Akcija kontekstualnog menija "${action}" izabrana za radnu površinu.`
       );
     }
 
@@ -445,20 +451,19 @@ function initUI() {
         break;
       case "color":
         if (!contextTargetNode) {
-          console.error(
+          logger.error(
             "Akcija 'Promeni boju' pokrenuta, ali contextTargetNode je null."
           );
           hideContextMenu(true);
           return;
         }
-        console.log("Akcija Promeni boju za čvor:", contextTargetNode.id);
+        logger.debug("Akcija Promeni boju za čvor:", contextTargetNode.id);
 
         contextColorPicker.oninput = (e) => {
           if (contextTargetNode) {
             contextTargetNode.setColor(e.target.value);
-            app.saveState();
           } else {
-            console.error(
+            logger.error(
               "contextTargetNode je null unutar color picker oninput"
             );
           }
@@ -466,7 +471,7 @@ function initUI() {
 
         contextColorPicker.onchange = (e) => {
           if (contextTargetNode) {
-            console.log(
+            logger.debug(
               "Color picker change (committed) za čvor:",
               contextTargetNode.id,
               "Nova boja:",
@@ -475,14 +480,14 @@ function initUI() {
             contextTargetNode.setColor(e.target.value);
             app.saveState();
           } else {
-            console.error(
+            logger.error(
               "contextTargetNode je null unutar color picker onchange"
             );
           }
           hideContextMenu(true);
         };
-
         contextColorPicker.click();
+        hideContextMenu(false);
         break;
       case "delete":
         app.deleteNode(contextTargetNode);
@@ -492,7 +497,7 @@ function initUI() {
         if (contextTargetNode) {
           showHistoryModal(contextTargetNode);
         } else {
-          console.error("Pokušaj prikaza istorije bez selektovanog čvora.");
+          logger.error("Pokušaj prikaza istorije bez selektovanog čvora.");
           showNotification(
             "Greška: Nije izabran čvor za prikaz istorije.",
             "error"
@@ -504,7 +509,7 @@ function initUI() {
         if (contextTargetNode) {
           showIconPickerModal(contextTargetNode);
         } else {
-          console.error("Pokušaj izbora ikone bez selektovanog čvora.");
+          logger.error("Pokušaj izbora ikone bez selektovanog čvora.");
           showNotification(
             "Greška: Nije izabran čvor za promenu ikone.",
             "error"
@@ -513,7 +518,7 @@ function initUI() {
         hideContextMenu(true);
         break;
       default:
-        console.warn(`Nepoznata akcija: ${action}`);
+        logger.warn(`Nepoznata akcija: ${action}`);
         hideContextMenu(true);
     }
   });
@@ -576,11 +581,6 @@ function initUI() {
             content = reference.getAttribute("title");
             reference.setAttribute("data-tippy-original-title", content);
           }
-          console.log(
-            `Tippy content function for element: ${
-              reference.id || "untitled"
-            }. Determined content: "${content || ""}"`
-          );
           return content || "";
         },
         onShow(instance) {
@@ -593,7 +593,6 @@ function initUI() {
               );
             }
             el.removeAttribute("title");
-            console.log(`Removed title from ${el.id || "element"} in onShow.`);
           }
         },
         onHide(instance) {
@@ -601,7 +600,6 @@ function initUI() {
           const originalTitle = el.getAttribute("data-tippy-original-title");
           if (originalTitle && !el.hasAttribute("title")) {
             el.setAttribute("title", originalTitle);
-            console.log(`Restored title to ${el.id || "element"} in onHide.`);
           }
         },
       }
@@ -615,14 +613,14 @@ function initUI() {
       tippyInstances = [];
     }
 
-    console.log(
+    logger.info(
       `Tippy.js initialized for navbar tools with theme: ${tippyTheme}. Instances: ${tippyInstances.length}`
     );
   } else {
-    console.warn("Tippy.js not loaded, tooltips will be native.");
+    logger.warn("Tippy.js not loaded, tooltips will be native.");
   }
 
-  console.log("UI Initialized");
+  logger.info("UI Initialized");
 }
 
 const ui = {
