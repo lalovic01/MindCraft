@@ -71,7 +71,7 @@ class Node {
     nodeElement.appendChild(headerDiv);
     nodeElement.appendChild(descriptionDiv);
 
-    console.log(
+    logger.debug(
       `Node ${this.id} element created. Initial icon: ${this.icon}, Icon span display: ${iconSpan.style.display}`
     );
     return nodeElement;
@@ -179,7 +179,7 @@ class Node {
       if (this.history.length > 10) {
         this.history.shift();
       }
-      console.log(
+      logger.debug(
         `Node ${this.id} content updated. History size: ${this.history.length}. Current icon in history entry: ${this.icon}`
       );
       app.saveState();
@@ -187,10 +187,10 @@ class Node {
   }
 
   setIcon(newIcon) {
-    console.log(
+    logger.debug(
       `--- Node ${this.id}: setIcon CALLED with newIcon: "${newIcon}" ---`
     );
-    console.log(
+    logger.debug(
       `Node ${this.id}: Current this.icon BEFORE any change: "${this.icon}"`
     );
 
@@ -198,31 +198,31 @@ class Node {
     const normalizedNewIcon =
       newIcon === "" || newIcon === undefined ? null : newIcon;
 
-    console.log(
+    logger.debug(
       `Node ${this.id}: Values for comparison - oldIcon: "${oldIcon}", normalizedNewIcon: "${normalizedNewIcon}"`
     );
 
     if (oldIcon === normalizedNewIcon) {
-      console.log(
+      logger.debug(
         `Node ${this.id}: Icon is the same ("${oldIcon}" === "${normalizedNewIcon}"), no update needed. Exiting setIcon.`
       );
       return;
     }
 
-    console.log(`Node ${this.id}: Icon is different. Proceeding with update.`);
+    logger.debug(`Node ${this.id}: Icon is different. Proceeding with update.`);
     this.icon = normalizedNewIcon;
-    console.log(
+    logger.debug(
       `Node ${this.id}: this.icon property updated to: "${this.icon}"`
     );
 
     const oldElement = this.element;
     const parent = oldElement.parentNode;
 
-    console.log(
+    logger.debug(
       `Node ${this.id}: Attempting to recreate element. Current this.icon for createElement: "${this.icon}"`
     );
     this.element = this.createElement();
-    console.log(
+    logger.debug(
       `Node ${this.id}: New element created. Attaching listeners and updating properties.`
     );
     this.updatePosition();
@@ -231,19 +231,19 @@ class Node {
 
     if (parent && oldElement) {
       parent.replaceChild(this.element, oldElement);
-      console.log(`Node ${this.id}: Element replaced in DOM.`);
+      logger.debug(`Node ${this.id}: Element replaced in DOM.`);
     } else {
-      console.error(
+      logger.error(
         `Node ${this.id}: Could not replace element in DOM. Parent: ${parent}, oldElement: ${oldElement}`
       );
     }
 
     if (app.getSelectedNode() && app.getSelectedNode().id === this.id) {
-      console.log(`Node ${this.id}: Re-selecting node.`);
+      logger.debug(`Node ${this.id}: Re-selecting node.`);
       app.selectNode(this, true);
     }
 
-    console.log(
+    logger.debug(
       `Node ${this.id}: BEFORE history push, this.icon is: "${this.icon}"`
     );
 
@@ -257,11 +257,11 @@ class Node {
       this.history.shift();
     }
 
-    console.log(
+    logger.debug(
       `Node ${this.id}: Icon change pushed to history. History size: ${this.history.length}. Icon in new history entry: ${this.icon}`
     );
     app.saveState();
-    console.log(`--- Node ${this.id}: setIcon FINISHED ---`);
+    logger.debug(`--- Node ${this.id}: setIcon FINISHED ---`);
   }
 
   setColor(newColor) {
@@ -324,7 +324,7 @@ class Node {
       data.icon,
       data.history
     );
-    console.log(`Node ${node.id} deserialized with icon: ${node.icon}`);
+    logger.debug(`Node ${node.id} deserialized with icon: ${node.icon}`);
     return node;
   }
 
