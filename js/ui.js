@@ -20,6 +20,7 @@ const snapToGridButton = document.getElementById("snap-to-grid-btn");
 
 const helpModal = document.getElementById("help-modal");
 const closeHelpModalButton = document.getElementById("close-help-modal-btn");
+const startOnboardingButton = document.getElementById("start-onboarding-btn");
 
 const PREDEFINED_ICONS = [
   "fa-lightbulb",
@@ -392,6 +393,16 @@ function initUI() {
       app.toggleSnapToGrid();
     });
   }
+  if (
+    startOnboardingButton &&
+    typeof onboardingManager !== "undefined" &&
+    onboardingManager.start
+  ) {
+    startOnboardingButton.addEventListener("click", () =>
+      onboardingManager.start(true)
+    );
+  }
+
   if (
     typeof app !== "undefined" &&
     typeof app.isSnapToGridEnabled === "function"
