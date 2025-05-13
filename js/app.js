@@ -53,6 +53,12 @@ const app = (function () {
       connectNodesButton
     );
 
+    if (typeof onboardingManager !== "undefined" && onboardingManager.init) {
+      onboardingManager.init(this);
+    } else {
+      logger.error("OnboardingManager not available or init function missing.");
+    }
+
     loadState();
     setupEventListeners();
     console.log("App Initialized.");
@@ -886,6 +892,12 @@ const app = (function () {
     showNotification("Kreiranje novog projekta...", "info");
     clearWorkspace();
     clearMapData();
+    if (
+      typeof onboardingManager !== "undefined" &&
+      onboardingManager.resetTourCompletion
+    ) {
+      onboardingManager.resetTourCompletion();
+    }
 
     viewTransform = { x: 0, y: 0, scale: 1 };
 
@@ -930,4 +942,4 @@ const app = (function () {
   };
 })();
 
-document.addEventListener("DOMContentLoaded", app.init);
+document.addEventListener("DOMContentLoaded", () => app.init());
