@@ -11,6 +11,7 @@
   --surface-light: #ffffff;
   --text-light: #333;
   --primary-light: #007bff;
+  --primary-light-rgb: 0, 123, 255;
   --primary-hover-light: #0056b3;
   --shadow-light-outer: rgba(0, 0, 0, 0.1);
   --shadow-light-inner-top: rgba(255, 255, 255, 0.7);
@@ -25,6 +26,7 @@
   --surface-dark: #34495e;
   --text-dark: #ecf0f1;
   --primary-dark: #3498db;
+  --primary-dark-rgb: 52, 152, 219;
   --primary-hover-dark: #2980b9;
   --shadow-dark-outer: rgba(0, 0, 0, 0.3);
   --shadow-dark-inner-top: rgba(255, 255, 255, 0.05);
@@ -59,6 +61,7 @@ body[data-theme="dark"] {
   --surface-main: var(--surface-dark);
   --text-main: var(--text-dark);
   --primary-main: var(--primary-dark);
+  --primary-main-rgb: var(--primary-dark-rgb);
   --primary-hover-main: var(--primary-hover-dark);
   --shadow-main-outer: var(--shadow-dark-outer);
   --shadow-main-inner-top: var(--shadow-dark-inner-top);
@@ -77,6 +80,7 @@ body[data-theme="light"] {
   --surface-main: var(--surface-light);
   --text-main: var(--text-light);
   --primary-main: var(--primary-light);
+  --primary-main-rgb: var(--primary-light-rgb);
   --primary-hover-main: var(--primary-hover-light);
   --shadow-main-outer: var(--shadow-light-outer);
   --shadow-main-inner-top: var(--shadow-light-inner-top);
@@ -430,7 +434,7 @@ body[data-theme="dark"] .node-description.empty::before {
   gap: 12px;
   font-size: 0.95em;
   transition: background-color var(--animation-speed-fast) ease,
-    color var(--animation-speed-fast) ease;
+    color var (--animation-speed-fast) ease;
 }
 
 .context-menu li:hover {
@@ -803,4 +807,132 @@ body[data-theme="dark"] .tippy-box[data-theme~="dark"] .tippy-arrow {
   border-radius: var(--border-radius, 8px) !important;
   font-family: var(--font-family, "Poppins", sans-serif) !important;
   font-size: 0.9em !important;
+}
+
+.onboarding-overlay-piece {
+  position: fixed;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 2999;
+  display: none;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  pointer-events: none;
+}
+
+.onboarding-highlight {
+  position: relative;
+  z-index: 3001 !important;
+  box-shadow: 0 0 0 5px var(--primary-main) !important;
+  border-radius: var(--border-radius);
+  transition: box-shadow 0.3s ease-in-out, background-color 0.1s ease-in-out;
+  opacity: 1 !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  transform: translateZ(0);
+  background-color: var(--surface-main) !important;
+  color: var(--text-main) !important;
+  isolation: isolate;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-shadow: none !important;
+  pointer-events: auto !important;
+}
+
+.navbar .tools button.onboarding-highlight,
+.navbar .tools .tool-button.onboarding-highlight {
+  color: white !important;
+  background-color: var(--primary-main) !important;
+}
+
+body[data-theme="dark"] .onboarding-highlight {
+  box-shadow: 0 0 0 5px var(--primary-main) !important;
+  background-color: var(--surface-dark) !important;
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .navbar .tools button.onboarding-highlight,
+body[data-theme="dark"] .navbar .tools .tool-button.onboarding-highlight {
+  color: white !important;
+  background-color: var(--primary-main) !important;
+}
+
+#onboarding-message-box {
+  position: fixed;
+  background-color: var(--surface-main);
+  color: var(--text-main);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 3002;
+  display: none;
+  width: 300px;
+  max-width: 90vw;
+  transition: background-color var(--transition-speed) ease,
+    color var(--transition-speed) ease, opacity 0.3s ease, transform 0.3s ease;
+}
+
+#onboarding-message-box h3 {
+  margin-top: 0;
+  color: var(--primary-main);
+}
+
+#onboarding-message-box p {
+  margin-bottom: 15px;
+  line-height: 1.6;
+}
+
+.onboarding-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+#onboarding-message-box button {
+  background-color: var(--primary-main);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+}
+
+#onboarding-message-box button:hover {
+  background-color: var(--primary-hover-main);
+}
+
+#onboarding-skip-btn {
+  background-color: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--text-main);
+}
+body[data-theme="dark"] #onboarding-skip-btn {
+  border-color: var(--text-dark);
+}
+
+#onboarding-skip-btn:hover {
+  background-color: var(--text-main);
+  color: var(--surface-main);
+}
+body[data-theme="dark"] #onboarding-skip-btn:hover {
+  color: var(--surface-dark);
+}
+
+#onboarding-temp-message {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--primary-main);
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--border-radius);
+  z-index: 4000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+#onboarding-temp-message.visible {
+  opacity: 1;
 }
