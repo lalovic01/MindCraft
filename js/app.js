@@ -10,6 +10,8 @@ const app = (function () {
   const exportPngButton = document.getElementById("export-png-btn");
   const exportPdfButton = document.getElementById("export-pdf-btn");
   const helpButton = document.getElementById("help-btn");
+  const centerMapButton = document.getElementById("center-map-btn");
+  const autoArrangeButton = document.getElementById("auto-arrange-btn");
 
   const GRID_SIZE = 20;
   let nodes = [];
@@ -76,6 +78,9 @@ const app = (function () {
     workspace.addEventListener("touchstart", handlePanStart, {
       passive: false,
     });
+
+    centerMapButton.addEventListener("click", centerMap);
+    autoArrangeButton.addEventListener("click", autoArrangeNodes);
 
     window.addEventListener("mousemove", handleGenericMove);
     window.addEventListener("touchmove", handleGenericMove, { passive: false });
@@ -920,6 +925,49 @@ const app = (function () {
       "Novi projekat je kreiran. Radna površina je očišćena.",
       "success"
     );
+  }
+
+  function centerMap() {
+    viewTransform = { x: 0, y: 0, scale: 1 };
+    applyViewTransform();
+    redrawAllConnectors();
+    showNotification("Mapa centrirana.");
+    saveState();
+  }
+
+  function autoArrangeNodes() {
+    const nodeCount = nodes.length;
+    if (nodeCount === 0) return;
+
+    const workspaceRect = workspace.getBoundingClientRect();
+    const availableWidth = workspaceRect.width;
+    const availableHeight = workspaceRect.height;
+
+    const cols = Math.ceil(Math.sqrt(nodeCount));
+    const rows = Math.ceil(nodeCount / cols);
+
+    const nodeWidth = 200;
+    const nodeHeight = 100;
+
+    const colSpacing = Math.min(nodeWidth * 1.2, availableWidth / cols);
+    const rowSpacing = Math.min(nodeHeight * 1.5, availableHeight / rows);
+
+    let i = 0;
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols && i < nodeCount; col++) {
+        const x = col * colSpacing + (availableWidth - cols * colSpacing) / 2;
+        const y = row * rowSpacing + (availableHeight - rows * rowSpacing) / 2;
+
+        nodes[i].x = x;
+        nodes[i].y = y;
+        nodes[i].updatePosition();
+        i++;
+      }
+    }
+    applyViewTransform();
+    redrawAllConnectors();
+    showNotification("Čvorovi automatski raspoređeni.");
+    saveState();
   }
 
   return {
