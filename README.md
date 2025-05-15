@@ -50,6 +50,8 @@ MindCraft je veb alat za mapiranje uma koji vam pomaže da vizuelno organizujete
 - Čuvanje i učitavanje mapa uma
 - Interfejs sa prevlačenjem i ispuštanjem
 - Izvoz i deljenje vaših kreacija
+- **Centriranje mape: Vratite mapu u početni položaj.**
+- **Automatsko raspoređivanje čvorova: Rasporedite čvorove u uredan raspored.**
 
 ### Instalacija
 
@@ -65,6 +67,8 @@ MindCraft je veb alat za mapiranje uma koji vam pomaže da vizuelno organizujete
 2. Dvaput kliknite na čvor da biste uredili njegov sadržaj
 3. Prevucite između čvorova da biste kreirali veze
 4. Koristite traku sa alatkama za prilagođavanje vaše mape uma
+5. **Koristite dugme "Centriraj" da biste vratili mapu u početni položaj.**
+6. **Koristite dugme "Rasporedi" da biste automatski rasporedili čvorove.**
 
 ### Tehnologije
 
