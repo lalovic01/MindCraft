@@ -13,6 +13,10 @@ MindCraft is a web-based mind mapping tool that helps you organize your thoughts
 - Save and load your mind maps
 - Drag and drop interface
 - Export and share your creations
+- **Center Map: Return the map to its initial centered position.**
+- **Auto Arrange Nodes: Arrange the nodes in an organized layout.**
+- **Interactive Onboarding Guide: A step-by-step guide for new users.**
+- **Mobile-Friendly Design: Improved touch interactions for mobile devices.**
 
 ### Installation
 
@@ -28,12 +32,19 @@ MindCraft is a web-based mind mapping tool that helps you organize your thoughts
 2. Double-click a node to edit its content
 3. Drag between nodes to create connections
 4. Use the toolbar to customize your mind map
+5. **Use the "Center" button to return the map to its initial position.**
+6. **Use the "Arrange" button to automatically arrange the nodes.**
+7. **Click "Guide" to start the interactive onboarding tutorial.**
 
 ### Technologies
 
 - HTML5
 - CSS3
 - JavaScript (vanilla)
+- **dom-to-image-more**
+- **jsPDF**
+- **Tippy.js**
+- **Font Awesome**
 
 ---
 
@@ -52,6 +63,8 @@ MindCraft je veb alat za mapiranje uma koji vam pomaže da vizuelno organizujete
 - Izvoz i deljenje vaših kreacija
 - **Centriranje mape: Vratite mapu u početni položaj.**
 - **Automatsko raspoređivanje čvorova: Rasporedite čvorove u uredan raspored.**
+- **Interaktivni vodič za nove korisnike: Vodič korak po korak za nove korisnike.**
+- **Prilagođeno mobilnim uređajima: Poboljšana interakcija dodirom za mobilne uređaje.**
 
 ### Instalacija
 
@@ -69,9 +82,14 @@ MindCraft je veb alat za mapiranje uma koji vam pomaže da vizuelno organizujete
 4. Koristite traku sa alatkama za prilagođavanje vaše mape uma
 5. **Koristite dugme "Centriraj" da biste vratili mapu u početni položaj.**
 6. **Koristite dugme "Rasporedi" da biste automatski rasporedili čvorove.**
+7. **Kliknite na "Vodič" da biste pokrenuli interaktivni vodič.**
 
 ### Tehnologije
 
 - HTML5
 - CSS3
 - JavaScript (vanilla)
+- **dom-to-image-more**
+- **jsPDF**
+- **Tippy.js**
+- **Font Awesome**
